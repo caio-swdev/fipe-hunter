@@ -1,0 +1,98 @@
+@startuml
+
+participant AlertingOrchestrator
+participant TelegramBotService
+participant MessageQueue
+participant TelegramAPI
+participant Database
+
+AlertingOrchestrator -> TelegramBotService: send_alert(opportunity, chat_ids)
+activate TelegramBotService
+
+TelegramBotService -> TelegramBotService: format_message(opportunity)
+note over TelegramBotService
+  Message: "Volkswagen Gol 2015
+  Desconto: 25%
+  Score: 82/100
+  Link: https://olx.com/..."
+end note
+return message_text
+
+TelegramBotService -> MessageQueue: queue_message(message_text, chat_ids)
+activate MessageQueue
+MessageQueue --> TelegramBotService: queued (100 messages in queue)
+deactivate MessageQueue
+
+TelegramBotService -> TelegramBotService: process_message_queue()
+note over TelegramBotService
+  Process at 30 msg/sec max
+  (Telegram API rate limit)
+end note
+
+loop For each message (up to 30/sec)
+  MessageQueue -> MessageQueue: dequeue_message()
+
+  TelegramBotService -> TelegramAPI: sendMessage(chat_id, text)
+  activate TelegramAPI
+
+  alt Message Sent Successfully (HTTP 200)
+    TelegramAPI --> TelegramBotService: {ok: true, result: {message_id: 123}}
+    deactivate TelegramAPI
+
+    TelegramBotService -> Database: INSERT alerts (status='sent', message_id=123)
+    Database --> TelegramBotService: ok
+
+    note over TelegramBotService
+      Alert successfully delivered
+      Move to next message in queue
+    end note
+
+  else Connection Timeout
+    TelegramAPI -x TelegramBotService: timeout
+    TelegramBotService -> TelegramBotService: queue_for_retry(message, backoff: 10s)
+    note over TelegramBotService
+      Transient error - retry later
+    end note
+
+  else User Blocked Bot (HTTP 403)
+    TelegramAPI --> TelegramBotService: {ok: false, error_code: 403}
+    deactivate TelegramAPI
+
+    TelegramBotService -> Database: UPDATE chat_ids SET inactive=true WHERE id=chat_id
+    Database --> TelegramBotService: ok
+
+    TelegramBotService -> Database: INSERT alerts (status='failed', error='bot_blocked')
+    Database --> TelegramBotService: ok
+
+    note over TelegramBotService
+      User blocked bot - mark inactive
+      Don't retry this chat_id
+    end note
+
+  else API Error (HTTP 5xx)
+    TelegramAPI --> TelegramBotService: {ok: false, error_code: 500}
+    deactivate TelegramAPI
+
+    TelegramBotService -> TelegramBotService: retry_count++
+    alt retry_count < 3
+      TelegramBotService -> TelegramBotService: exponential_backoff(attempt)
+      TelegramBotService -> MessageQueue: queue_for_retry(message, backoff_time)
+    else All retries exhausted
+      TelegramBotService -> Database: INSERT alerts (status='failed', error='max_retries')
+      Database --> TelegramBotService: ok
+
+      TelegramBotService -> TelegramBotService: alert_admin(error_details)
+    end
+  end
+end
+
+TelegramBotService --> AlertingOrchestrator: {status: 'queued', messages_sent: 30, messages_pending: 70}
+
+note over AlertingOrchestrator
+  Alerts queued for delivery
+  Processing continues on schedule
+end note
+
+deactivate TelegramBotService
+
+@enduml

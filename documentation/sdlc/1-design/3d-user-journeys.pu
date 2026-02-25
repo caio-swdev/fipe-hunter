@@ -1,0 +1,323 @@
+@startuml
+title FIPE Hunter - User Journeys (Activity Diagram)
+
+skinparam activity {
+  BackgroundColor LightBlue
+  BorderColor DarkBlue
+  DiamondBackgroundColor LightYellow
+  DiamondBorderColor Orange
+}
+
+' ============================================================
+' JOURNEY 1: Find a Price Opportunity (Bulk-Scraped Results)
+' ============================================================
+
+|#LightCyan|Find a Price Opportunity|
+
+start
+:User logs in;
+note right
+  Entry: Painel (/)
+  Precondition: session valid, JWT active
+  Ref: frontend-dashboard UC Section 4
+end note
+
+:View Dashboard Home (/);
+:Review Metrics Overview;
+
+if (Best Deals widget shows high-score item?) then (yes)
+  :Click Best Deal item;
+  :Opportunity Detail modal opens;
+  note right
+    Entry: Best Deals Widget click
+    Ref: 6-frontend-dashboard UC Section 5 Primary Flow
+  end note
+  :Review vehicle specs, FIPE price,\ndiscount % and score breakdown;
+  if (Opportunity still valid?) then (yes)
+    :Click "Open Listing" link;
+    :Marketplace page opens in new tab;
+    :Return to modal after reviewing;
+    :Click "Mark as Purchased";
+    note right
+      Postcondition: status = "purchased"
+      Ref: 6-frontend-dashboard UC Section 7
+    end note
+    :Dashboard refreshes opportunity status;
+    stop
+  else (already handled)
+    :Click "Archive";
+    :Opportunity moved to Historico;
+    stop
+  endif
+else (no compelling deal on home)
+  :Click "Oportunidades" in nav;
+  :Land on Opportunity Browser (/opportunities);
+  :Set score filter >= 75;
+  :Set discount range 20-50%;
+  :Click "Apply Filters";
+  :Table updates with filtered results;
+  if (Results found?) then (yes)
+    :Click row to open Detail modal;
+    :Review vehicle and price breakdown;
+    :Click "Open Listing";
+    stop
+  else (no results)
+    :Clear filters and lower threshold;
+    stop
+  endif
+endif
+
+' ============================================================
+' JOURNEY 2: Search On-Demand (Real-Time Vehicle Search)
+' ============================================================
+
+|#LightGreen|Search On-Demand|
+
+start
+:Navigate to Oportunidades (/opportunities);
+note right
+  Entry: Opportunity Browser search form
+  Ref: 6-on-demand-search UC1 Preconditions
+end note
+
+:Enter Brand (e.g., "Honda");
+:Enter Model (e.g., "Civic");
+:Optionally enter Year (e.g., 2020);
+
+if (Inputs valid?) then (yes)
+  :Click "Buscar" (Search Now);
+  note right
+    System normalizes: "VW" -> "Volkswagen"
+    Ref: 6-on-demand-search UC1 Main Flow
+  end note
+  :Progress indicator: FIPE Lookup -> OLX Scraping -> Processing;
+  :Hand off to FIPE Lookup (UC32 includes UC4);
+  note right
+    Cross-feature handoff: UC32 --> UC4
+    Ref: 12-usecase-dependency.pu
+  end note
+  if (FIPE price found?) then (yes)
+    :System scrapes OLX for matching listings;
+    note right
+      Ref: 6-on-demand-search UC3 Main Flow
+    end note
+    if (OLX listings found?) then (yes)
+      :System deduplicates against existing DB;
+      :System calculates discounts (20-50% range);
+      :Hand off to Opportunity Scoring (UC32 includes UC8-9);
+      note right
+        Cross-feature handoff: UC32 --> UC8, UC9
+        Ref: 12-usecase-dependency.pu
+      end note
+      :System calculates scores (0-100);
+      :Results appear in opportunity table;
+      if (Any score >= 75?) then (yes)
+        :Telegram alert queued and sent;
+        note right
+          Cross-feature handoff: UC32 --> UC12 (extend: score>75)
+          Ref: 12-usecase-dependency.pu
+        end note
+        :Google Sheets row appended (source=on_demand_search);
+        note right
+          Cross-feature handoff: UC32 --> UC10
+        end note
+      else (no high score)
+      endif
+      if (Any score >= 80?) then (yes)
+        :Opportunity sent to CarWizard;
+        note right
+          Cross-feature handoff: UC32 --> UC15 (extend: score>80)
+          Ref: 12-usecase-dependency.pu
+        end note
+      else (score < 80)
+      endif
+      :User reviews sorted results in table;
+      :User clicks row for Detail modal;
+      stop
+    else (no OLX listings)
+      :Display "No listings found on OLX for this vehicle";
+      :No opportunities created;
+      stop
+    endif
+  else (FIPE price not found)
+    :Display "Vehicle not found in FIPE database";
+    :Offer "Retry" button;
+    if (User retries?) then (yes)
+      :Repeat FIPE lookup;
+      stop
+    else (cancelled)
+      stop
+    endif
+  endif
+else (validation fails)
+  :Display inline validation errors\n(brand required, invalid year, etc.);
+  note right
+    Ref: 6-on-demand-search UC1 Alternative Flows A1-A5
+  end note
+  :User corrects inputs and resubmits;
+  stop
+endif
+
+' ============================================================
+' JOURNEY 3: Review Analytics and Export Insights
+' ============================================================
+
+|#LightYellow|Review Analytics|
+
+start
+:Navigate to Analises (/analytics);
+note right
+  Entry: Analytics page via nav menu
+  Ref: 6-frontend-dashboard Section 5 "View Analytics"
+end note
+:Page loads 4 concurrent API requests;
+:View Discount Distribution Histogram;
+:View Market Trends Multi-Line Chart (30 days);
+:View Top Brands Bar Chart;
+:View Marketplace Comparison Table;
+
+if (Wants to narrow time range?) then (yes)
+  :Apply date range filter;
+  :Charts refresh with filtered data;
+else (use default 30 days)
+endif
+
+if (Wants to export insights?) then (yes)
+  :Click "Export Analytics";
+  :Select CSV format;
+  :File downloads as analytics-{timestamp}.csv;
+  note right
+    Postcondition: CSV file downloaded
+    Ref: 6-frontend-dashboard Section 5 step 13-15
+  end note
+  stop
+else (browsing only)
+  :Note key metrics for action;
+  :Navigate to Oportunidades to act;
+  stop
+endif
+
+' ============================================================
+' JOURNEY 4: Manage Opportunities and Export Data
+' ============================================================
+
+|#MistyRose|Manage and Export|
+
+start
+:Navigate to Oportunidades (/opportunities);
+note right
+  Entry: Opportunity Browser table
+  Ref: 6-frontend-dashboard Section 5 "Browse Opportunities"
+end note
+:Browse paginated table (25 rows/page);
+
+if (Want to search by text?) then (yes)
+  :Enter brand/model in search field;
+  :Table filters with highlighted matches;
+else (browse by filter)
+  :Apply score / marketplace / discount filters;
+endif
+
+if (Find interesting opportunity?) then (yes)
+  :Click row to open Detail modal;
+  :Review full opportunity details;
+  if (Want to save for later?) then (yes)
+    :Click "Add to Favorites";
+    :Opportunity appears in Favoritos (/favorites);
+  else (act now)
+    if (Purchased the vehicle?) then (yes)
+      :Click "Mark as Purchased";
+      :Status updated in DB;
+      :Opportunity moves to Historico;
+    else (not interested)
+      :Click "Archive";
+      :Opportunity moved to Historico;
+    endif
+  endif
+  if (Want to export current filtered list?) then (yes)
+    :Close modal;
+    :Click "Export" button;
+    :Select format (CSV / Excel / PDF);
+    :File downloads as opportunities-{timestamp}.ext;
+    note right
+      Postcondition: export file downloaded
+      Ref: 6-frontend-dashboard Section 6b
+    end note
+    stop
+  else (no export needed)
+    stop
+  endif
+else (no interesting result)
+  :Adjust filters or clear search;
+  stop
+endif
+
+' ============================================================
+' JOURNEY 5: Admin - Configure System and Monitor Health
+' ============================================================
+
+|#LavenderBlush|Admin Configure and Monitor|
+
+start
+:Admin logs in with elevated permissions;
+note right
+  Entry: Configuracoes (/settings - admin only)
+  Ref: 6-frontend-dashboard Section 5 "Configure Settings"
+end note
+:Navigate to Configuracoes;
+:Review current scraping schedule and thresholds;
+
+if (Needs to change scraping schedule?) then (yes)
+  :Modify frequency (Hourly / Daily);
+  :Adjust OLX and WebMotors toggles;
+  :Set start time and days of week;
+  :Click "Save Changes";
+  :System confirms "Settings saved successfully";
+  note right
+    Postcondition: new settings take effect on next scrape
+    Ref: 6-frontend-dashboard Section 5 step 18
+  end note
+else (no schedule change)
+endif
+
+if (Needs to adjust alert thresholds?) then (yes)
+  :Change Telegram threshold slider;
+  :Change CarWizard threshold slider;
+  :Toggle Sheets logging;
+  :Click "Save Changes";
+else (no change needed)
+endif
+
+:Navigate to Monitoramento;
+note right
+  Entry: Monitoring page via nav or Settings link
+  Ref: 6-frontend-dashboard Section 5 "View Monitoring Dashboard"
+end note
+:Review health metrics (last/next scrape, success rate);
+:Check API health cards (FIPE, Telegram, Sheets, CarWizard);
+
+if (Any service in Warning or Error state?) then (yes)
+  :Click affected service card for details;
+  :Review response time and last check;
+  if (Message queue has failed messages?) then (yes)
+    :Click "Retry Failed" button;
+    :System re-queues failed alert messages;
+    :Success notification displayed;
+    note right
+      Postcondition: failed alerts re-queued
+      Ref: 6-frontend-dashboard Section 5 step 21
+    end note
+  else (no failed messages)
+  endif
+  :Admin investigates external service issue;
+else (all services healthy)
+  :Review scrape log detail;
+  :Verify listings found and saved counts;
+  :Check for validation errors;
+endif
+
+:Click "Test Scrape" in Settings to verify fix;
+:Navigate to Painel to verify metrics updated;
+stop
+
+@enduml

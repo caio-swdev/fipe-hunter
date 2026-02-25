@@ -1,0 +1,589 @@
+@startuml
+
+' === DOMAIN LAYER ENTITIES ===
+
+class Vehicle {
+  - id: UUID
+  - brand: string
+  - model: string
+  - year: int
+  - version: string
+  - transmission: string
+  - fuel_type: string
+  - mileage: int
+  - condition: string
+  --
+  + get_fipe_key(): string
+  + validate(): bool
+}
+
+class Listing {
+  - id: UUID
+  - vehicle: Vehicle
+  - marketplace: MarketplaceType
+  - price: Price
+  - mileage: int
+  - condition: string
+  - url: string
+  - description: string
+  - seller_name: string
+  - seller_rating: float
+  - created_at: datetime
+  - scraped_at: datetime
+  --
+  + is_duplicate_of(other: Listing): bool
+  + validate(): bool
+}
+
+class Opportunity {
+  - id: UUID
+  - listing: Listing
+  - fipe_price: Price
+  - discount: Discount
+  - score: Score
+  - status: string
+  - created_at: datetime
+  - updated_at: datetime
+  - carwizard_id: string
+  --
+  + calculate_score(): Score
+  + is_qualified(): bool
+  + update_status(status): void
+}
+
+class Alert {
+  - id: UUID
+  - opportunity: Opportunity
+  - channel: string
+  - recipient: string
+  - status: string
+  - sent_at: datetime
+  - error_message: string
+  --
+  + send(): bool
+  + mark_sent(): void
+  + mark_failed(error): void
+}
+
+' === VALUE OBJECTS ===
+
+class Price {
+  - amount: float
+  - currency: string
+  --
+  + compare_to(other: Price): float
+  + apply_discount(pct: float): Price
+}
+
+class Discount {
+  - percentage: float
+  - raw_amount: float
+  --
+  + is_valid_opportunity(): bool
+  + is_suspicious(): bool
+}
+
+class Score {
+  - value: int
+  - components: ScoreComponents
+  --
+  + is_high_priority(): bool
+  + to_rating_string(): string
+}
+
+class ScoreComponents {
+  - discount_score: int
+  - condition_score: int
+  - demand_score: int
+  - recency_score: int
+  --
+  + calculate_weighted_average(): int
+}
+
+class MarketplaceType {
+  OLX
+  WEBMOTORS
+  MERCADO_LIVRE
+  COMPRE_VENDA
+}
+
+class SearchQuery {
+  - brand: string
+  - model: string
+  - year: int (optional)
+  --
+  + normalize(): void
+  + to_fipe_query(): string
+  + to_olx_search_url(): string
+}
+
+' === REPOSITORIES (INTERFACES) ===
+
+interface ListingRepository {
+  + save(listing: Listing): void
+  + find_by_id(id: UUID): Listing
+  + find_by_url(url: string): Listing
+  + find_all(): List<Listing>
+  + find_duplicates(listing: Listing): List<Listing>
+  + delete(id: UUID): void
+}
+
+interface OpportunityRepository {
+  + save(opportunity: Opportunity): void
+  + find_by_id(id: UUID): Opportunity
+  + find_all(): List<Opportunity>
+  + find_by_score_range(min: int, max: int): List<Opportunity>
+  + find_by_status(status: string): List<Opportunity>
+  + update(opportunity: Opportunity): void
+  + delete(id: UUID): void
+}
+
+interface AlertRepository {
+  + save(alert: Alert): void
+  + find_by_id(id: UUID): Alert
+  + find_by_status(status: string): List<Alert>
+  + find_by_opportunity(opp_id: UUID): List<Alert>
+  + update(alert: Alert): void
+}
+
+interface CacheRepository {
+  + get(key: string): any
+  + set(key: string, value: any, ttl: int): void
+  + delete(key: string): void
+  + exists(key: string): bool
+}
+
+' === USE CASES / APPLICATION SERVICES ===
+
+class ScrapingUseCase {
+  - scraper_service: MarketplaceScraperService
+  - listing_repo: ListingRepository
+  --
+  + execute(marketplace: MarketplaceType): List<Listing>
+  - validate_listings(listings: List<Listing>): List<Listing>
+  - deduplicate(listings: List<Listing>): List<Listing>
+}
+
+class PriceLookupUseCase {
+  - fipe_service: FIPEClientService
+  - cache_repo: CacheRepository
+  --
+  + execute(vehicle: Vehicle): Price
+  - normalize_vehicle_data(vehicle: Vehicle): Vehicle
+  - perform_fuzzy_match(vehicle: Vehicle): Price
+}
+
+class PriceComparisonUseCase {
+  - comparison_service: PriceComparisonService
+  --
+  + execute(listing: Listing, fipe_price: Price): Discount
+  - validate_discount(discount: Discount): bool
+}
+
+class ScoringUseCase {
+  - scoring_service: ScoringService
+  - opportunity_repo: OpportunityRepository
+  --
+  + execute(listing: Listing, discount: Discount): Opportunity
+  - calculate_components(listing: Listing, discount: Discount): ScoreComponents
+  - apply_weights(components: ScoreComponents): Score
+}
+
+class SheetsIntegrationUseCase {
+  - sheets_service: GoogleSheetsService
+  --
+  + execute(opportunity: Opportunity): void
+  - format_for_sheets(opp: Opportunity): List
+  - append_to_sheet(data: List): void
+}
+
+class TelegramAlertUseCase {
+  - telegram_service: TelegramBotService
+  - alert_repo: AlertRepository
+  --
+  + execute(opportunity: Opportunity, recipients: List<string>): void
+  - format_alert_message(opp: Opportunity): string
+  - send_to_queue(message: string, recipient: string): void
+}
+
+class CarWizardSyncUseCase {
+  - carwizard_service: CarWizardService
+  - opportunity_repo: OpportunityRepository
+  --
+  + execute(opportunity: Opportunity): void
+  - prepare_payload(opp: Opportunity): dict
+  - store_carwizard_id(opp_id: UUID, cw_id: string): void
+  - handle_status_update(cw_id: string, status: string): void
+}
+
+class OnDemandSearchOrchestrator {
+  - query_parser: SearchQueryParser
+  - fipe_service: FIPEClientService
+  - scraper_service: MarketplaceScraperService
+  - price_comp_service: PriceComparisonService
+  - scoring_service: ScoringService
+  - opportunity_repo: OpportunityRepository
+  - listing_repo: ListingRepository
+  --
+  + execute(brand: string, model: string, year: int): List<Opportunity>
+  - parse_query(brand, model, year): SearchQuery
+  - lookup_fipe_price(vehicle: Vehicle): Price
+  - scrape_listings(search_query: string): List<Listing>
+  - deduplicate_listings(listings: List<Listing>): List<Listing>
+  - compare_prices(listings, fipe_price): List<Listing>
+  - score_opportunities(listings): List<Opportunity>
+  - persist_opportunities(opportunities): void
+  - trigger_downstream_actions(opportunities): void
+  - handle_error(error: Exception): void
+}
+
+class SearchQueryParser {
+  --
+  + parse(brand: string, model: string, year: int): SearchQuery
+  + normalize_brand(brand: string): string
+  + normalize_model(model: string): string
+  + validate_year(year: int): bool
+}
+
+' === SERVICES ===
+
+class MarketplaceScraperService {
+  - olx_client: OLXScraperClient
+  - webmotors_client: WebMotorsScraperClient
+  --
+  + scrape_olx(): List<Listing>
+  + scrape_webmotors(): List<Listing>
+  - parse_listing_html(html: string): Listing
+  - rotate_user_agent(): string
+  - apply_request_delay(): void
+}
+
+class FIPEClientService {
+  - api_client: FIPEAPIClient
+  - cache_repo: CacheRepository
+  --
+  + get_price(vehicle: Vehicle): Price
+  - build_query_params(vehicle: Vehicle): dict
+  - handle_api_error(error): Price
+  - cache_result(vehicle: Vehicle, price: Price): void
+}
+
+class PriceComparisonService {
+  --
+  + calculate_discount(listing_price: Price, fipe_price: Price): Discount
+  - validate_prices(listing: Price, fipe: Price): bool
+  - is_suspicious_discount(discount: Discount): bool
+}
+
+class ScoringService {
+  - discount_weight: float = 0.40
+  - condition_weight: float = 0.30
+  - demand_weight: float = 0.20
+  - recency_weight: float = 0.10
+  --
+  + calculate_score(listing: Listing, discount: Discount): Score
+  - normalize_discount_score(discount: Discount): int
+  - normalize_condition_score(condition: string): int
+  - estimate_demand_score(brand: string, model: string): int
+  - normalize_recency_score(created_at: datetime): int
+}
+
+class GoogleSheetsService {
+  - sheets_client: GoogleSheetsClient
+  --
+  + append_opportunity(opportunity: Opportunity): void
+  - build_sheet_row(opp: Opportunity): List
+  - handle_quota_limit(error): void
+  - retry_with_backoff(operation): void
+}
+
+class TelegramBotService {
+  - telegram_client: TelegramAPIClient
+  - message_queue: MessageQueue
+  --
+  + send_alert(message: string, chat_id: string): void
+  - format_message_text(opportunity: Opportunity): string
+  - validate_chat_id(chat_id: string): bool
+  - queue_message(message: string, chat_id: string): void
+  - process_message_queue(): void
+}
+
+class CarWizardService {
+  - carwizard_client: CarWizardAPIClient
+  --
+  + send_opportunity(opportunity: Opportunity): string
+  + get_status(carwizard_id: string): string
+  + get_vehicle_history(vehicle: Vehicle): dict
+  - build_payload(opportunity: Opportunity): dict
+}
+
+' === FRONTEND LAYER (Presentation) ===
+
+class DashboardController {
+  - opportunity_service: OpportunityService
+  - analytics_service: AnalyticsService
+  - config_service: ConfigService
+  --
+  + get_dashboard_summary(): dict
+  + get_top_opportunities(limit: int): List<Opportunity>
+  + get_price_trends(days: int): List<TrendData>
+  + get_opportunities_paginated(page: int, limit: int): Page
+}
+
+class OpportunityQueryService {
+  - opportunity_repo: OpportunityRepository
+  - listing_repo: ListingRepository
+  --
+  + find_all_paginated(page: int, limit: int): Page
+  + find_by_filters(filters: FilterCriteria): List<Opportunity>
+  + search_opportunities(query: string): List<Opportunity>
+  + sort_opportunities(opportunities: List, sort_key: string): List
+  + export_to_csv(opportunities: List): bytes
+}
+
+class AnalyticsQueryService {
+  - opportunity_repo: OpportunityRepository
+  - listing_repo: ListingRepository
+  --
+  + get_discount_distribution(days: int): HistogramData
+  + get_market_trends(days: int): TrendChartData
+  + get_brand_analysis(days: int): BrandAnalysisData
+  + get_marketplace_comparison(days: int): ComparisonData
+}
+
+class ConfigurationService {
+  - config_repo: ConfigRepository
+  --
+  + get_all_config(): Configuration
+  + update_scraping_schedule(config: ScheduleConfig): void
+  + update_alert_thresholds(config: AlertConfig): void
+  + update_marketplace_sources(sources: List<Marketplace>): void
+  + update_discount_filters(min: float, max: float): void
+}
+
+class MonitoringService {
+  - scrape_log_repo: ScrapeLogRepository
+  - alert_repo: AlertRepository
+  - health_checker: HealthChecker
+  --
+  + get_system_status(): SystemStatus
+  + get_last_scrape_log(): ScrapeLog
+  + get_api_health_status(): HealthStatus
+  + get_message_queue_status(): QueueStatus
+}
+
+class HealthChecker {
+  - fipe_client: FIPEAPIClient
+  - telegram_client: TelegramAPIClient
+  - sheets_client: GoogleSheetsClient
+  - carwizard_client: CarWizardAPIClient
+  --
+  + check_all_services(): List<ServiceHealth>
+  + check_fipe_api(): ServiceHealth
+  + check_telegram(): ServiceHealth
+  + check_sheets_api(): ServiceHealth
+  + check_carwizard_api(): ServiceHealth
+}
+
+class SystemStatus {
+  - last_scrape_time: datetime
+  - next_scrape_time: datetime
+  - success_rate: float
+  - queue_pending: int
+  - service_health: List<ServiceHealth>
+  --
+  + to_dict(): dict
+}
+
+class ScrapeLog {
+  - id: UUID
+  - marketplace: string
+  - start_time: datetime
+  - end_time: datetime
+  - listings_found: int
+  - listings_saved: int
+  - errors: List<string>
+  - status: string
+  - duration_seconds: int
+  --
+  + get_summary(): dict
+}
+
+' === CONFIGURATION ENTITIES ===
+
+class Configuration {
+  - scraping_schedule: ScheduleConfig
+  - alert_thresholds: AlertConfig
+  - marketplace_sources: List<Marketplace>
+  - discount_filters: DiscountFilter
+  --
+  + validate(): bool
+  + to_dict(): dict
+}
+
+class ScheduleConfig {
+  - frequency: string (hourly|daily|custom)
+  - start_time: time
+  - enabled_sources: List<Marketplace>
+  - days_of_week: List<int>
+  --
+  + is_valid(): bool
+  + next_execution_time(): datetime
+}
+
+class AlertConfig {
+  - telegram_threshold: int
+  - carwizard_threshold: int
+  - sheets_enabled: bool
+  --
+  + validate(): bool
+}
+
+class FilterCriteria {
+  - score_min: int
+  - score_max: int
+  - discount_min: float
+  - discount_max: float
+  - marketplaces: List<string>
+  - search_query: string
+  --
+  + to_query_params(): dict
+}
+
+class TrendData {
+  - date: date
+  - avg_discount: float
+  - avg_score: float
+  - listings_count: int
+}
+
+class HistogramData {
+  - buckets: List<Bucket>
+  - statistics: Statistics
+}
+
+class Bucket {
+  - range_min: float
+  - range_max: float
+  - count: int
+}
+
+class Statistics {
+  - mean: float
+  - median: float
+  - std_dev: float
+  - min: float
+  - max: float
+}
+
+' === RELATIONSHIPS ===
+
+Vehicle "1" -- "*" Listing
+Listing "1" -- "*" Opportunity
+Opportunity "1" -- "*" Alert
+
+Listing --> Price
+Listing --> MarketplaceType
+Opportunity --> Discount
+Opportunity --> Score
+Score --> ScoreComponents
+
+Discount --> Price
+
+ScrapingUseCase --> ListingRepository
+PriceLookupUseCase --> CacheRepository
+ScoringUseCase --> OpportunityRepository
+TelegramAlertUseCase --> AlertRepository
+
+ScrapingUseCase --> MarketplaceScraperService
+PriceLookupUseCase --> FIPEClientService
+PriceComparisonUseCase --> PriceComparisonService
+ScoringUseCase --> ScoringService
+SheetsIntegrationUseCase --> GoogleSheetsService
+TelegramAlertUseCase --> TelegramBotService
+CarWizardSyncUseCase --> CarWizardService
+
+' On-Demand Search relationships
+OnDemandSearchOrchestrator --> SearchQueryParser
+OnDemandSearchOrchestrator --> FIPEClientService
+OnDemandSearchOrchestrator --> MarketplaceScraperService
+OnDemandSearchOrchestrator --> PriceComparisonService
+OnDemandSearchOrchestrator --> ScoringService
+OnDemandSearchOrchestrator --> OpportunityRepository
+OnDemandSearchOrchestrator --> ListingRepository
+OnDemandSearchOrchestrator --> SheetsIntegrationUseCase
+OnDemandSearchOrchestrator --> TelegramAlertUseCase
+OnDemandSearchOrchestrator --> CarWizardSyncUseCase
+SearchQueryParser --> SearchQuery
+
+' Repository interfaces (implemented by Infrastructure layer)
+' Implementations: SQLiteListingRepository, SQLiteOpportunityRepository, etc.
+
+note bottom of Vehicle
+  Core domain entity representing
+  a vehicle with standardized attributes
+end note
+
+note bottom of Listing
+  External marketplace listing
+  with vehicle reference and pricing
+end note
+
+note bottom of Opportunity
+  Qualified opportunity resulting from
+  listing + FIPE comparison + scoring
+end note
+
+note bottom of Score
+  Ranked opportunity using weighted
+  components (discount, condition, demand, recency)
+end note
+
+note bottom of DashboardController
+  REST API endpoints for frontend
+  dashboard data requests
+end note
+
+note bottom of OpportunityQueryService
+  Query and filtering logic for
+  opportunity browser and search
+end note
+
+note bottom of AnalyticsQueryService
+  Data aggregation for charts and
+  market trend analysis
+end note
+
+note bottom of MonitoringService
+  System health and status monitoring
+  exposed via API endpoints
+end note
+
+' Dashboard service relationships
+DashboardController --> OpportunityQueryService
+DashboardController --> AnalyticsQueryService
+DashboardController --> ConfigurationService
+DashboardController --> MonitoringService
+
+OpportunityQueryService --> OpportunityRepository
+OpportunityQueryService --> ListingRepository
+AnalyticsQueryService --> OpportunityRepository
+AnalyticsQueryService --> ListingRepository
+ConfigurationService --> ConfigRepository
+MonitoringService --> ScrapeLogRepository
+MonitoringService --> AlertRepository
+MonitoringService --> HealthChecker
+
+HealthChecker --> FIPEClientService
+HealthChecker --> TelegramBotService
+HealthChecker --> GoogleSheetsService
+HealthChecker --> CarWizardService
+
+FilterCriteria --> OpportunityQueryService
+TrendData --> AnalyticsQueryService
+HistogramData --> AnalyticsQueryService
+SystemStatus --> MonitoringService
+ScrapeLog --> MonitoringService
+Configuration --> ConfigurationService
+
+@enduml

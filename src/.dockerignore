@@ -1,0 +1,83 @@
+# =============================================================================
+# .dockerignore — FIPE Hunter
+# Excludes everything the Docker build does not need.
+# Keep this file trimmed: smaller context = faster builds on Render.com.
+# =============================================================================
+
+# Frontend — built inside Docker (Node.js stage), vite-app source is needed
+# node_modules excluded below; package-lock.json must be present for npm ci
+
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Byte-compiled / cached Python
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache/
+
+# Test artefacts
+tests/
+test_search_demo.py
+**/.coverage
+**/htmlcov/
+**/*.cover
+
+# Build outputs
+dist/
+build/
+**/*.egg-info/
+
+# Environment / secrets — never bake into image
+.env
+.env.*
+!.env.example
+
+# Local SQLite database
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Dev tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Ruff / mypy caches
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+
+# Logs
+*.log
+logs/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Node modules — never copy, always reinstall inside Docker
+node_modules/
+**/node_modules/
+
+# Project docs and screenshots (not needed at runtime)
+docs/
+screenshots/
+overview/
+*.md
+!alembic/README
+
+# CI and workflow artefacts
+.dev/
+.wf/
+.claude/
+scripts/

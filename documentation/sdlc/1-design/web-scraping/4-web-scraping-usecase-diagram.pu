@@ -1,0 +1,53 @@
+@startuml
+
+left to right direction
+
+actor Scheduler as scheduler
+actor Administrator as admin
+
+rectangle "Web Scraping System" {
+  scheduler --> (Scrape OLX Listings)
+  scheduler --> (Scrape WebMotors Listings)
+  admin --> (View Scrape Status)
+  admin --> (Trigger Manual Scrape)
+
+  (Scrape OLX Listings) --> (Extract Listing Details)
+  (Scrape WebMotors Listings) --> (Extract Listing Details)
+
+  (Extract Listing Details) --> (Validate Listing Data)
+  (Validate Listing Data) --> (Save Listing to Database)
+
+  (Save Listing to Database) --> (Deduplicate Listings)
+  (Deduplicate Listings) --> (Mark Duplicates)
+
+  (Mark Duplicates) --> (Log Scraping Activity)
+  (Log Scraping Activity) --> (Trigger Price Lookup)
+
+  (View Scrape Status) --> (Display Scrape Logs)
+  (Trigger Manual Scrape) --> (Scrape OLX Listings)
+  (Trigger Manual Scrape) --> (Scrape WebMotors Listings)
+
+  (Scrape OLX Listings) ..> (Handle Rate Limits) : <<extend>>
+  (Scrape WebMotors Listings) ..> (Handle Rate Limits) : <<extend>>
+
+  (Extract Listing Details) ..> (Rotate User Agents) : <<include>>
+  (Extract Listing Details) ..> (Apply Request Delays) : <<include>>
+
+  (Validate Listing Data) ..> (Check Data Completeness) : <<extend>>
+  (Handle Rate Limits) ..> (Implement Exponential Backoff) : <<include>>
+}
+
+note right of (Extract Listing Details)
+  Parse HTML for:
+  - Brand, Model, Year
+  - Price, Mileage, Condition
+  - Seller info, URL
+end note
+
+note right of (Handle Rate Limits)
+  Detect HTTP 429
+  Backoff 60+ seconds
+  Resume when able
+end note
+
+@enduml

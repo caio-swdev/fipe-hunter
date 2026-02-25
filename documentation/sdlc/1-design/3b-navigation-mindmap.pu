@@ -1,0 +1,186 @@
+@startmindmap
+title FIPE Hunter - App Page Hierarchy (MindMap)
+
+* FIPE Hunter
+
+** Painel\n(Dashboard Home)
+***_ Features
+**** Metrics Overview
+***** Total Opportunities
+***** New Today
+***** High Score Count (>75)
+***** Top Score
+**** Best Deals Widget
+***** Top 5 by Score
+***** Vehicle + Discount + Score
+***** Link to Detail Modal
+**** Price Trends Chart
+***** 30-Day Discount Evolution
+***** Min / Max / Avg Stats
+***** Export Chart Data (CSV)
+**** Auto-Refresh (5 min)
+***_ Navigation
+**** -> Oportunidades
+**** -> Favoritos
+**** -> Analises
+**** -> Historico
+**** -> Configuracoes (Admin)
+**** -> Monitoramento (Admin)
+**** -> Detail Modal (best deal click)
+
+** Oportunidades\n(Opportunity Browser)
+***_ Features
+**** On-Demand Search Form
+***** Brand Input (required)
+***** Model Input (required)
+***** Year Input (optional)
+***** Search Now Button
+***** Cancel Search Button
+***** Progress Indicator
+**** Filter Panel
+***** Score Range Slider (0-100)
+***** Marketplace Checkboxes (OLX, WebMotors)
+***** Discount Range (%)
+***** Apply / Clear Actions
+**** Opportunities Table
+***** 25 Rows per Page
+***** Sortable Columns (score, discount, price, date)
+***** Pagination Controls
+***** Source Badge (Bulk / On-Demand)
+**** Export
+***** CSV Format
+***** Excel Format
+***** PDF Format
+***_ Navigation
+**** -> Painel
+**** -> Favoritos
+**** -> Analises
+**** -> Historico
+**** -> Detail Modal (row click)
+
+** Favoritos\n(Favorites)
+***_ Features
+**** Favorited Opportunities List
+***** Filter by Status
+***** Sort by Score / Date
+**** Remove Favorite Action
+**** Link to Full Detail
+***_ Navigation
+**** -> Painel
+**** -> Oportunidades
+**** -> Analises
+**** -> Detail Modal (item click)
+
+left side
+
+** Analises\n(Analytics)
+***_ Features
+**** Discount Distribution
+***** Histogram Chart
+***** Buckets (0-10%, 10-20%, 20-30%, 30-40%, 40-50%, 50%+)
+***** Statistics (mean, median, std dev)
+***** Marketplace Filter
+**** Market Trends
+***** Multi-Line Chart (30 days)
+***** Average Discount % Line
+***** Average Score Line
+***** Listings per Day Line
+**** Top Brands
+***** Bar Chart (top 10)
+***** Opportunities Count
+***** Avg Score and Avg Discount
+***** Toggle View
+**** Marketplace Comparison
+***** Performance Table
+***** Total Opportunities
+***** Avg Discount and Avg Score
+***** Success Rate
+**** Export Analytics (CSV)
+***_ Navigation
+**** -> Painel
+**** -> Oportunidades
+**** -> Favoritos
+
+** Historico\n(Historical)
+***_ Features
+**** Archived / Purchased List
+***** Status Filter
+***** Date Filter
+***** Sort Controls
+***** Unarchive Action
+**** Price Evolution Chart
+***** 90-Day Chart per Vehicle
+***** Vehicle Search Input
+***** Price Trend Line
+***** Statistics (current avg, high, low)
+**** Export Historical Data
+***** CSV All Data
+***** Excel Multi-Sheet
+***** PDF Summary Report
+***_ Navigation
+**** -> Painel
+**** -> Oportunidades
+**** -> Analises
+**** -> Detail Modal (item click)
+
+** Configuracoes\n(Settings - Admin Only)
+***[#LightYellow] Admin Only - Elevated Permissions Required
+***_ Features
+**** Scraping Schedule
+***** Frequency (Hourly / Daily)
+***** OLX Toggle
+***** WebMotors Toggle
+***** Start Time Picker
+***** Days of Week Checkboxes
+**** Alert Thresholds
+***** Telegram Threshold (score >= 75)
+***** Sheets Logging Toggle
+***** CarWizard Threshold (score >= 80)
+**** Marketplace Config
+***** Enable / Disable Sources
+***** Source-Specific Options
+**** Discount Filters
+***** Minimum Discount % (default 20%)
+***** Maximum Discount % (default 50%)
+***** Suspicious Flag (>50%)
+**** Actions
+***** Save Changes Button
+***** Test Scrape (Manual Trigger)
+***_ Navigation
+**** -> Painel
+**** -> Monitoramento
+**** -> Oportunidades
+
+** Monitoramento\n(Monitoring - Admin Only)
+***[#LightYellow] Admin Only - Elevated Permissions Required
+***_ Features
+**** System Health
+***** Last Scrape Time
+***** Next Scrape Time
+***** Success Rate %
+***** Overall Status (Green / Yellow / Red)
+**** Scrape Details
+***** Start and End Time
+***** Duration
+***** Listings Found / Saved
+***** Duplicates and Errors
+***** View Full Log Link
+**** API Health Cards
+***** FIPE API (status, response time)
+***** Telegram Bot (status, response time)
+***** Google Sheets (status, response time)
+***** CarWizard API (status, response time)
+**** Message Queue
+***** Pending Messages Count
+***** Failed Messages Count
+***** Sent Today Count
+***** Processing Rate
+***** Retry Failed Button
+***** Clear Queue Button
+**** Auto-Refresh (30 sec)
+***_ Navigation
+**** -> Painel
+**** -> Configuracoes
+**** -> Oportunidades
+
+@endmindmap

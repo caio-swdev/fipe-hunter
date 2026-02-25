@@ -1,0 +1,177 @@
+@startuml
+
+package "FIPE Hunter System" {
+
+    package "Presentation Layer (FastAPI)" {
+        [API Router]
+        [Health Endpoints]
+        [Scrape Controllers]
+        [Opportunity Endpoints]
+        [Config Endpoints]
+        [Search Controllers]
+    }
+
+    package "Application Layer" {
+        package "Use Cases" {
+            [Scrape OLX UseCase]
+            [Scrape WebMotors UseCase]
+            [Lookup FIPE Price UseCase]
+            [Compare Prices UseCase]
+            [Score Opportunity UseCase]
+            [Log to Sheets UseCase]
+            [Send Telegram Alert UseCase]
+            [Sync CarWizard UseCase]
+            [List Opportunities UseCase]
+            [Filter Opportunities UseCase]
+            [On-Demand Search Orchestrator]
+            [Parse Search Query UseCase]
+        }
+
+        package "Services" {
+            [Marketplace Scraper Service]
+            [FIPE Client Service]
+            [Price Comparison Service]
+            [Scoring Service]
+            [Google Sheets Service]
+            [Telegram Bot Service]
+            [CarWizard Service]
+            [Cache Service]
+        }
+
+        package "DTOs & Validators" {
+            [Listing DTO]
+            [Opportunity DTO]
+            [Score Result DTO]
+            [Input Validators]
+            [Search Query Validator]
+        }
+    }
+
+    package "Domain Layer" {
+        package "Entities" {
+            [Vehicle Entity]
+            [Listing Entity]
+            [Opportunity Entity]
+            [Alert Entity]
+        }
+
+        package "Value Objects" {
+            [Price]
+            [Discount]
+            [Score]
+            [Marketplace Type]
+        }
+
+        package "Repositories (Interfaces)" {
+            [Listing Repository]
+            [Opportunity Repository]
+            [Alert Repository]
+            [Cache Repository]
+        }
+
+        package "Business Rules" {
+            [Scoring Algorithm]
+            [Validation Rules]
+            [Deduplication Logic]
+        }
+    }
+
+    package "Infrastructure Layer" {
+        package "Data Access (SQLite)" {
+            [Listing Repository Impl]
+            [Opportunity Repository Impl]
+            [Alert Repository Impl]
+            [Cache Repository Impl]
+            [Database (SQLite)]
+        }
+
+        package "External Integrations" {
+            [OLX Scraper Client]
+            [WebMotors Scraper Client]
+            [FIPE API Client]
+            [Google Sheets Client]
+            [Telegram API Client]
+            [CarWizard API Client]
+        }
+
+        package "Cache & Queue" {
+            [Redis Cache]
+            [Message Queue]
+            [Job Scheduler]
+        }
+    }
+
+    ' Dependencies (pointing inward to Domain)
+    [API Router] --> [Scrape Controllers]
+    [API Router] --> [Opportunity Endpoints]
+    [API Router] --> [Config Endpoints]
+    [API Router] --> [Search Controllers]
+
+    [Scrape Controllers] --> [Scrape OLX UseCase]
+    [Scrape Controllers] --> [Scrape WebMotors UseCase]
+    [Opportunity Endpoints] --> [List Opportunities UseCase]
+    [Opportunity Endpoints] --> [Filter Opportunities UseCase]
+    [Search Controllers] --> [On-Demand Search Orchestrator]
+
+    ' Use Cases to Services
+    [Scrape OLX UseCase] --> [Marketplace Scraper Service]
+    [Scrape WebMotors UseCase] --> [Marketplace Scraper Service]
+    [Lookup FIPE Price UseCase] --> [FIPE Client Service]
+    [Compare Prices UseCase] --> [Price Comparison Service]
+    [Score Opportunity UseCase] --> [Scoring Service]
+    [Log to Sheets UseCase] --> [Google Sheets Service]
+    [Send Telegram Alert UseCase] --> [Telegram Bot Service]
+    [Sync CarWizard UseCase] --> [CarWizard Service]
+
+    ' On-Demand Search orchestrator
+    [On-Demand Search Orchestrator] --> [Parse Search Query UseCase]
+    [On-Demand Search Orchestrator] --> [Lookup FIPE Price UseCase]
+    [On-Demand Search Orchestrator] --> [Marketplace Scraper Service]
+    [On-Demand Search Orchestrator] --> [Compare Prices UseCase]
+    [On-Demand Search Orchestrator] --> [Score Opportunity UseCase]
+    [On-Demand Search Orchestrator] --> [Log to Sheets UseCase]
+    [On-Demand Search Orchestrator] --> [Send Telegram Alert UseCase]
+    [On-Demand Search Orchestrator] --> [Sync CarWizard UseCase]
+
+    ' Search query validation
+    [Parse Search Query UseCase] --> [Search Query Validator]
+
+    ' Services to Domain
+    [Marketplace Scraper Service] --> [Listing Entity]
+    [Marketplace Scraper Service] --> [Listing Repository]
+    [FIPE Client Service] --> [Cache Service]
+    [Price Comparison Service] --> [Discount]
+    [Scoring Service] --> [Scoring Algorithm]
+    [Scoring Service] --> [Score]
+    [Google Sheets Service] --> [Opportunity Entity]
+    [Telegram Bot Service] --> [Alert Entity]
+    [CarWizard Service] --> [Opportunity Entity]
+
+    ' Repositories to Database
+    [Listing Repository Impl] ..|> [Listing Repository]
+    [Opportunity Repository Impl] ..|> [Opportunity Repository]
+    [Alert Repository Impl] ..|> [Alert Repository]
+    [Cache Repository Impl] ..|> [Cache Repository]
+
+    [Listing Repository Impl] --> [Database (SQLite)]
+    [Opportunity Repository Impl] --> [Database (SQLite)]
+    [Alert Repository Impl] --> [Database (SQLite)]
+
+    ' External Services
+    [Marketplace Scraper Service] --> [OLX Scraper Client]
+    [Marketplace Scraper Service] --> [WebMotors Scraper Client]
+    [FIPE Client Service] --> [FIPE API Client]
+    [Google Sheets Service] --> [Google Sheets Client]
+    [Telegram Bot Service] --> [Telegram API Client]
+    [CarWizard Service] --> [CarWizard API Client]
+
+    ' Cache & Queue
+    [Cache Service] --> [Redis Cache]
+    [Marketplace Scraper Service] --> [Message Queue]
+    [Telegram Bot Service] --> [Message Queue]
+    [Job Scheduler] --> [Message Queue]
+
+    note "Clean Architecture:\nPresentation -> Application -> Domain -> Infrastructure\nDependencies point inward" as N1
+}
+
+@enduml

@@ -1,0 +1,52 @@
+# =============================================================================
+# render.yaml — FIPE Hunter API
+# Target: Render.com — region frankfurt (EU, closer to BR + different ASN than Oregon)
+# Deploy: triggered via Render API (see .github/workflows/fipe-hunter-deploy.yml)
+# Render Blueprint reference: https://render.com/docs/blueprint-spec
+# =============================================================================
+
+services:
+  - type: web
+    name: fipe-hunter-api
+    runtime: docker
+    # Dockerfile path is relative to repo root.
+    # IMPORTANT: In the Render dashboard, set "Root Directory" to "." (repo root).
+    # This ensures Docker build context = repo root, which is required because the
+    # vite-app uses file: dependencies pointing to packages/ at the monorepo root.
+    dockerfilePath: products/demo-fipe-hunter/src/Dockerfile
+    plan: free
+    region: frankfurt
+    envVars:
+      # Secrets — set in Render dashboard, never committed
+      - key: DATABASE_URL
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: CARWIZARD_API_URL
+        sync: false
+      - key: CARWIZARD_API_KEY
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      # Non-secret defaults (safe to commit)
+      - key: SCRAPE_SCHEDULE_HOURS
+        value: "1"
+      - key: REQUEST_DELAY_MIN_SECONDS
+        value: "2"
+      - key: REQUEST_DELAY_MAX_SECONDS
+        value: "5"
+      - key: ADMIN_JWT_EXPIRE_MIN
+        value: "480"
+    healthCheckPath: /health
+
+# NOTE: Render free tier spins down after 15 minutes of inactivity.
+# First request after spin-down has ~30s cold start. Acceptable for portfolio demo.
+# Render web service URL: https://fipe-hunter-api.onrender.com

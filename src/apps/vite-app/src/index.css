@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* Scan shared packages for Tailwind classes */
+@source "../../../../../../packages/automotive-ui/src";
+@source "../../../../../../packages/ui/src";
+
+/*
+ * Tailwind v4 @theme — required so shared UI component classes are generated.
+ * (e.g. bg-popover, bg-accent, text-muted-foreground, border-border)
+ * These are initial fallbacks; ThemeSyncer in App.tsx overrides them at runtime.
+ */
+@theme {
+  --color-background: oklch(0.96 0.02 180);
+  --color-foreground: oklch(0.15 0.08 180);
+
+  --color-card: oklch(0.98 0.01 180);
+  --color-card-foreground: oklch(0.15 0.08 180);
+
+  --color-popover: oklch(1 0.005 180);
+  --color-popover-foreground: oklch(0.15 0.08 180);
+
+  --color-primary: oklch(0.4 0.1 180);
+  --color-primary-foreground: oklch(0.96 0.02 180);
+
+  --color-secondary: oklch(0.98 0.01 180);
+  --color-secondary-foreground: oklch(0.15 0.08 180);
+
+  --color-muted: oklch(0.92 0.02 180);
+  --color-muted-foreground: oklch(0.4 0.08 180);
+
+  --color-accent: oklch(0.94 0.015 180);
+  --color-accent-foreground: oklch(0.15 0.08 180);
+
+  --color-destructive: oklch(0.5 0.1 30);
+  --color-destructive-foreground: oklch(0.96 0.02 180);
+
+  --color-border: oklch(0.85 0.02 180);
+  --color-input: oklch(0.85 0.02 180);
+  --color-ring: oklch(0.4 0.1 180);
+}
+
+/* Basic CSS reset — must be in @layer base so Tailwind utilities can override it */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Glassmorphism scrollbar for ModelPicker dropdown */
+[aria-label="Modelos disponíveis"] {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 80, 200, 0.25) transparent;
+}
+
+[aria-label="Modelos disponíveis"]::-webkit-scrollbar {
+  width: 5px;
+}
+
+[aria-label="Modelos disponíveis"]::-webkit-scrollbar-track {
+  background: transparent;
+  margin-block: 4px;
+}
+
+[aria-label="Modelos disponíveis"]::-webkit-scrollbar-thumb {
+  background: rgba(100, 80, 200, 0.25);
+  border-radius: 99px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(140, 120, 240, 0.15);
+}
+
+[aria-label="Modelos disponíveis"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 80, 200, 0.45);
+}

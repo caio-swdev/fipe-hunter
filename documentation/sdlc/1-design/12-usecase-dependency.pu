@@ -1,0 +1,290 @@
+@startuml
+
+left to right direction
+
+' === ACTORS ===
+actor Scheduler as scheduler
+actor User as user
+actor ExternalSystem as external
+
+' === CORE FEATURES ===
+
+package "Web Scraping" {
+  (Scrape OLX) as UC1
+  (Scrape WebMotors) as UC2
+  (Deduplicate Listings) as UC3
+}
+
+package "Price Lookup" {
+  (Query FIPE API) as UC4
+  (Cache FIPE Price) as UC5
+}
+
+package "Price Comparison" {
+  (Calculate Discount) as UC6
+  (Identify Opportunities) as UC7
+}
+
+package "Scoring" {
+  (Calculate Score Components) as UC8
+  (Rank Opportunities) as UC9
+}
+
+package "Google Sheets Integration" {
+  (Format Opportunity Data) as UC10
+  (Append to Sheets) as UC11
+}
+
+package "Telegram Alerts" {
+  (Format Alert Message) as UC12
+  (Queue Alert) as UC13
+  (Send Telegram Message) as UC14
+}
+
+package "CarWizard Integration" {
+  (Prepare CarWizard Payload) as UC15
+  (Send to CarWizard) as UC16
+  (Sync Status Updates) as UC17
+}
+
+package "Monitoring & Analytics" {
+  (Log Scrape Activity) as UC18
+  (Record Alert History) as UC19
+  (Generate Statistics) as UC20
+}
+
+package "Frontend Dashboard" {
+  (View Dashboard Home) as UC21
+  (Browse Opportunities) as UC22
+  (Search Opportunities) as UC23
+  (Filter Opportunities) as UC24
+  (View Analytics) as UC25
+  (Configure Settings) as UC26
+  (View Monitoring) as UC27
+  (View Historical Data) as UC28
+  (Export Opportunities) as UC29
+}
+
+package "On-Demand Vehicle Search" {
+  (Parse Search Query) as UC30
+  (Validate Search Input) as UC31
+  (Execute On-Demand Search) as UC32
+}
+
+' === ACTOR INTERACTIONS ===
+
+scheduler --> UC1
+scheduler --> UC2
+scheduler --> UC4
+scheduler --> UC14
+
+user --> UC20
+user --> UC21
+user --> UC22
+user --> UC23
+user --> UC24
+user --> UC25
+user --> UC27
+user --> UC28
+user --> UC29
+user --> UC32 : triggers on-demand search
+
+external --> UC17
+
+' === FEATURE INTERACTIONS ===
+
+UC1 --> UC3 : includes
+UC2 --> UC3 : includes
+UC3 --> UC4 : includes
+UC3 --> UC18 : includes
+
+UC4 --> UC5 : <<include>>
+UC4 --> UC6 : <<extend>>
+
+UC6 --> UC7 : includes
+UC7 --> UC8 : includes
+UC8 --> UC9 : includes
+
+UC9 --> UC10 : includes
+UC10 --> UC11 : includes
+UC11 --> UC19 : includes
+
+UC9 --> UC12 : includes
+UC12 --> UC13 : includes
+UC13 --> UC14 : includes
+UC14 --> UC19 : includes
+
+UC9 --> UC15 : includes
+UC15 --> UC16 : includes
+UC16 --> UC19 : includes
+
+UC16 --> UC17 : <<extend>>
+
+UC1 --> UC18 : includes
+UC2 --> UC18 : includes
+UC14 --> UC19 : includes
+
+UC20 --> UC18 : uses
+UC20 --> UC19 : uses
+
+' === DASHBOARD USE CASE DEPENDENCIES ===
+
+UC21 -.> UC20 : queries metrics
+UC21 -.> UC22 : navigates_to
+
+UC22 --> UC23 : <<extend>>
+UC22 --> UC24 : <<extend>>
+UC22 -.> UC20 : queries data
+
+UC23 -.> UC22 : updates list
+
+UC24 -.> UC22 : updates list
+
+UC25 -.> UC20 : queries analytics
+
+UC26 --> UC26 : configuration use case
+UC26 -.> UC1 : affects scraping
+UC26 -.> UC2 : affects scraping
+UC26 -.> UC12 : affects alerting
+
+UC27 -.> UC18 : displays logs
+UC27 -.> UC19 : displays history
+UC27 -.> UC20 : displays stats
+
+UC28 -.> UC20 : queries history
+UC28 --> UC29 : export option
+
+UC29 -.> UC22 : exports filtered results
+
+' === ON-DEMAND SEARCH DEPENDENCIES ===
+
+UC32 --> UC30 : includes
+UC32 --> UC31 : includes
+UC32 --> UC4 : includes (FIPE lookup)
+UC32 --> UC2 : includes (OLX scraping - modified)
+UC32 --> UC6 : includes (price comparison)
+UC32 --> UC8 : includes (score calculation)
+UC32 --> UC9 : includes (rank results)
+UC32 --> UC10 : includes (sheets logging)
+UC32 --> UC12 : <<extend>> (if score > 75)
+UC32 --> UC15 : <<extend>> (if score > 80)
+
+UC30 --> UC31 : uses
+
+' === ALTERNATIVE FLOWS ===
+
+UC4 -.-> UC5 : fallback (cache miss)
+UC14 -.-> UC13 : fallback (retry queue)
+UC16 -.-> UC15 : fallback (malformed payload)
+
+' === EXTENSION POINTS ===
+
+UC7 .-> UC11 : <<extend>> (high-score opportunities)
+UC9 .-> UC14 : <<extend>> (score > 75)
+UC9 .-> UC16 : <<extend>> (score > 80)
+
+' === NOTES ===
+
+note as N1
+  **Web Scraping**
+  Triggered by scheduler hourly
+  Extract listings from marketplaces
+end note
+
+N1 .. UC1
+N1 .. UC2
+
+note as N2
+  **Deduplication**
+  Deduplicates by URL
+  Marks duplicate listings
+end note
+
+N2 .. UC3
+
+note as N3
+  **FIPE Lookup**
+  Query FIPE API for prices
+  Cache results for 24 hours
+  Handles fuzzy matching
+end note
+
+N3 .. UC4
+
+note as N4
+  **Price Comparison**
+  Compare listing vs FIPE price
+  Filter opportunities (20-50% discount)
+end note
+
+N4 .. UC6
+
+note as N5
+  **Scoring**
+  Calculate score (0-100)
+  Weighted components
+end note
+
+N5 .. UC8
+
+note as N6
+  **Sheets Integration**
+  Format for Google Sheets
+  Append to spreadsheet
+end note
+
+N6 .. UC10
+
+note as N7
+  **Telegram Alerts**
+  Format alert message
+  Queue for rate limiting
+  Send via Telegram Bot
+end note
+
+N7 .. UC12
+
+note as N8
+  **CarWizard Integration**
+  Prepare CarWizard payload
+  Send qualified opportunities
+  Receive status updates
+end note
+
+N8 .. UC15
+
+note as N9
+  **Monitoring**
+  Audit trail for all activities
+  Supports analytics and monitoring
+end note
+
+N9 .. UC18
+
+note as N10
+  **Frontend Dashboard**
+  User-facing web interface
+  Displays opportunities and analytics
+  Allows filtering, searching, exporting
+  Admin configuration and monitoring
+end note
+
+N10 .. UC21
+N10 .. UC22
+N10 .. UC25
+N10 .. UC26
+N10 .. UC27
+
+note as N11
+  **On-Demand Vehicle Search**
+  User-initiated real-time search
+  Complements scheduled bulk scraping
+  Returns results in 10-40 seconds
+  Reuses existing components
+end note
+
+N11 .. UC30
+N11 .. UC31
+N11 .. UC32
+
+@enduml

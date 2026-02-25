@@ -1,0 +1,27 @@
+[project]
+name = "fipe-adapters"
+version = "0.1.0"
+description = "Adapters layer for FIPE Hunter - controllers"
+requires-python = ">=3.9"
+dependencies = [
+    "fipe-business",
+    "fipe-infra",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fipe_adapters"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
