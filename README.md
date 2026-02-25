@@ -38,4 +38,4 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for component diagrams, ERD, and Archit
 
 ## Monorepo Origin
 
-Extracted from a private monorepo. Shared packages remain in the monorepo; the live demo runs the complete stack. Built solo. AI tooling used to accelerate documentation, scaffolding, and code review. The architecture decisions and running system are original.
+Extracted from a private monorepo. Shared packages remain in the monorepo; the live demo runs the complete stack. Built solo.
