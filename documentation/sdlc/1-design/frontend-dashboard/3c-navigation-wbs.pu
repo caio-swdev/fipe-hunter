@@ -1,8 +1,0 @@
-' DEPRECATED - MISPLACED FILE
-' This file has been superseded and should be deleted.
-' The correct app-wide navigation WBS is located at:
-' documentation/sdlc/1-design/3c-navigation-wbs.pu
-'
-' Navigation diagrams (3a, 3b, 3c, 3d) are GLOBAL (app-wide) and belong
-' at the ROOT of 1-design/, NOT inside a feature folder.
-' See: .claude/commands/sl-sdlc-design.md for the File Rules table.
