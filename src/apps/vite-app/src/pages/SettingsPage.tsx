@@ -30,7 +30,7 @@ export function SettingsPage() {
         <PlaceholderCard
           icon={Bell}
           title="Limites de Alerta"
-          description="Telegram pontuação > 75, registro no Sheets, CarWizard pontuação > 80"
+          description="Telegram pontuação > 75, limiar de pontuação configurável"
         />
         <PlaceholderCard
           icon={Store}

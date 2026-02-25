@@ -10,8 +10,6 @@ from .alert_repository import IAlertRepository
 from .fipe_client import IFIPEClient
 from .scraper import IScraper
 from .alert_service import IAlertService
-from .sheets_service import ISheetsService
-from .carwizard_service import ICarWizardService
 
 __all__ = [
     "IListingRepository",
@@ -21,6 +19,4 @@ __all__ = [
     "IFIPEClient",
     "IScraper",
     "IAlertService",
-    "ISheetsService",
-    "ICarWizardService",
 ]

@@ -82,6 +82,13 @@ class SearchController:
         self._wm_factory = webmotors_scraper_factory
         self._search_cache = search_cache_repo
 
+    async def _fetch_fipe_for_year(self, brand_id: str, model_id: int, year: int, years_list: list) -> Optional[dict]:
+        """Look up FIPE price for a specific year using a pre-fetched years_list."""
+        matched = self._fipe_client._match_year(year, years_list)
+        if not matched:
+            return None
+        return await self._fipe_client.lookup_price_by_ids(str(brand_id), int(model_id), matched["codigo"])
+
     async def search(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute on-demand vehicle search.
@@ -131,6 +138,15 @@ class SearchController:
             except Exception as e:
                 fipe_error = str(e)
 
+        # Pre-fetch years list for per-listing FIPE lookup when no specific year/year_code given
+        years_list = None
+        if brand_id and model_id and not fipe_price:
+            try:
+                years_list = await self._fipe_client._get_years_with_retry(str(brand_id), int(model_id))
+                print(f"[Search] Pre-fetched {len(years_list or [])} year entries for brand_id={brand_id} model_id={model_id}")
+            except Exception as e:
+                print(f"[Search] Could not pre-fetch years: {e}")
+
         # 2. Scrape OLX + WebMotors in parallel (with cache)
         scrape_year = year or (int(year_code.split("-")[0]) if year_code else None)
 
@@ -139,6 +155,27 @@ class SearchController:
             cached_results = self._search_cache.get(brand, model, scrape_year)
             if cached_results is not None:
                 print(f"[Search] Cache HIT for {brand} {model} {scrape_year} — skipping scrape")
+                # Enrich results that are missing FIPE price (stale cache entries)
+                if years_list:
+                    enriched = False
+                    for r in cached_results:
+                        if not r.get("fipe_price") and r.get("year"):
+                            try:
+                                fipe_result = await self._fetch_fipe_for_year(brand_id, model_id, r["year"], years_list)
+                                if fipe_result:
+                                    fp = fipe_result["price"]
+                                    lp = Price.from_float(r["listing_price"])
+                                    disc = Discount.calculate(lp, fp)
+                                    r["fipe_price"] = float(fp.amount)
+                                    r["discount_percent"] = float(disc.percentage)
+                                    enriched = True
+                            except Exception as e:
+                                print(f"[Search] FIPE enrichment failed for cached result: {e}")
+                    if enriched:
+                        try:
+                            self._search_cache.set(brand, model, scrape_year, cached_results)
+                        except Exception:
+                            pass
                 cached_results.sort(key=lambda o: o.get("score", 0), reverse=True)
                 return {
                     "status": "success",
@@ -234,21 +271,68 @@ class SearchController:
                         "found_at": listing.scraped_at.isoformat() if listing.scraped_at else "",
                     })
                 else:
-                    new_opportunities.append({
-                        "id": str(uuid.uuid4()),
-                        "brand": listing.brand,
-                        "model": listing.model,
-                        "year": listing.year,
-                        "listing_price": float(listing.price),
-                        "fipe_price": 0.0,
-                        "discount_percent": 0.0,
-                        "score": 0,
-                        "mileage_km": listing.mileage or 0,
-                        "source": listing.marketplace if hasattr(listing, 'marketplace') else "olx",
-                        "url": listing.url,
-                        "image_url": listing.image_url,
-                        "found_at": listing.scraped_at.isoformat() if listing.scraped_at else "",
-                    })
+                    # Try per-listing FIPE lookup when we have brand_id+model_id but no global fipe_price
+                    listing_fipe_price = None
+                    if years_list and listing.year:
+                        try:
+                            fipe_result = await self._fetch_fipe_for_year(brand_id, model_id, listing.year, years_list)
+                            if fipe_result:
+                                listing_fipe_price = fipe_result["price"]
+                        except Exception as e:
+                            print(f"[Search] Per-listing FIPE lookup failed: {e}")
+
+                    if listing_fipe_price:
+                        listing_price_vo = Price.from_float(listing.price)
+                        discount = Discount.calculate(listing_price_vo, listing_fipe_price)
+                        status = "suspicious" if discount.is_suspicious() else "active"
+                        score = self._score.execute(
+                            discount=discount,
+                            condition=listing.condition,
+                            mileage=listing.mileage,
+                            brand=listing.brand,
+                            model=listing.model,
+                            created_at=listing.scraped_at,
+                        )
+                        opportunity = self._create.execute(
+                            listing=listing,
+                            listing_id=hashlib.md5(_canonical_url(listing.url).encode()).hexdigest(),
+                            fipe_price=listing_fipe_price,
+                            discount=discount,
+                            score=score,
+                            status=status,
+                            image_url=listing.image_url,
+                        )
+                        new_opportunities.append({
+                            "id": opportunity.listing_id,
+                            "brand": opportunity.brand,
+                            "model": opportunity.model,
+                            "year": opportunity.year,
+                            "listing_price": float(opportunity.listing_price.amount),
+                            "fipe_price": float(opportunity.fipe_price.amount),
+                            "discount_percent": float(opportunity.discount.percentage),
+                            "score": opportunity.score.value,
+                            "mileage_km": opportunity.mileage or 0,
+                            "source": opportunity.marketplace,
+                            "url": opportunity.listing_url,
+                            "image_url": listing.image_url,
+                            "found_at": listing.scraped_at.isoformat() if listing.scraped_at else "",
+                        })
+                    else:
+                        new_opportunities.append({
+                            "id": str(uuid.uuid4()),
+                            "brand": listing.brand,
+                            "model": listing.model,
+                            "year": listing.year,
+                            "listing_price": float(listing.price),
+                            "fipe_price": 0.0,
+                            "discount_percent": 0.0,
+                            "score": 0,
+                            "mileage_km": listing.mileage or 0,
+                            "source": listing.marketplace if hasattr(listing, 'marketplace') else "olx",
+                            "url": listing.url,
+                            "image_url": listing.image_url,
+                            "found_at": listing.scraped_at.isoformat() if listing.scraped_at else "",
+                        })
             except Exception as e:
                 import traceback
                 print(f"Error processing listing {listing.url}: {e}")
