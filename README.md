@@ -8,7 +8,7 @@ Find underpriced used cars by comparing dealer listings against FIPE reference p
 
 ## Demo
 
-![Demo](./docs/demo-2026-02-08.gif)
+![Demo](./screenshots/demo-2026-02-08.gif)
 
 ## What It Does
 
