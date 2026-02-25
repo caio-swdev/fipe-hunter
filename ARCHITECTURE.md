@@ -12,12 +12,6 @@ The system follows Clean Architecture: domain logic is isolated from web framewo
 
 SQLite with three core tables: `cars`, `fipe_references`, and `opportunities`. The opportunities view joins listing price against the FIPE reference to compute the delta.
 
-## On-Demand Search Sequence
-
-![On-Demand Search Sequence](./documentation/diagrams/8-on-demand-search-sequence-diagram.png)
-
-User submits a search → FastAPI validates → scraper fetches live WebMotors listings → FIPE API is called for each result → opportunities are scored and returned in a single response.
-
 ---
 
 ## Architecture Decision Records
