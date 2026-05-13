@@ -21,7 +21,7 @@ FIPE Hunter scrapes car listings from WebMotors, compares each price against the
 | Frontend | React, TypeScript, Vite |
 | Backend | FastAPI, Python |
 | Database | Neon (PostgreSQL) |
-| Scraping | Playwright, playwright-stealth (headless Chromium) |
+| Scraping | nodriver + headless Chromium |
 | Deployment | Render (Docker multi-stage, single service) |
 
 ## Key Technical Decisions
@@ -34,4 +34,8 @@ FIPE Hunter scrapes car listings from WebMotors, compares each price against the
 ## Architecture
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for component diagrams, ERD, and Architecture Decision Records.
+
+## Monorepo Origin
+
+Extracted from a private monorepo. Shared packages remain in the monorepo; the live demo runs the complete stack. Built solo.
 
