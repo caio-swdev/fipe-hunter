@@ -19,7 +19,6 @@ from fipe_business.application.use_cases.create_opportunity import CreateOpportu
 from fipe_business.domain.value_objects import Price, Discount
 
 
-# Generic words that appear in FIPE version names but don't identify a specific trim
 _VERSION_SKIP_WORDS = {
     'sedan', 'hatch', 'hatchback', 'sw', 'suv', 'pick', 'up', 'cab',
     '16v', '8v', '12v', '4p', '2p', '5p', '3p', 'aut', 'man',
@@ -106,7 +105,7 @@ class SearchController:
         year_code: Optional[str] = params.get("year_code")
         version: Optional[str] = params.get("version")
 
-        # 1. FIPE price lookup
+
         fipe_data = None
         fipe_error = None
         fipe_price = None
@@ -138,7 +137,7 @@ class SearchController:
             except Exception as e:
                 fipe_error = str(e)
 
-        # Pre-fetch years list for per-listing FIPE lookup when no specific year/year_code given
+
         years_list = None
         if brand_id and model_id and not fipe_price:
             try:
@@ -147,15 +146,15 @@ class SearchController:
             except Exception as e:
                 print(f"[Search] Could not pre-fetch years: {e}")
 
-        # 2. Scrape OLX + WebMotors in parallel (with cache)
+
         scrape_year = year or (int(year_code.split("-")[0]) if year_code else None)
 
-        # Check search result cache first
+
         if self._search_cache:
             cached_results = self._search_cache.get(brand, model, scrape_year)
             if cached_results is not None:
                 print(f"[Search] Cache HIT for {brand} {model} {scrape_year} — skipping scrape")
-                # Enrich results that are missing FIPE price (stale cache entries)
+
                 if years_list:
                     enriched = False
                     for r in cached_results:
@@ -207,7 +206,7 @@ class SearchController:
         listings = olx_results + wm_results
         print(f"[Search] Total listings: {len(listings)} (OLX: {len(olx_results)}, WebMotors: {len(wm_results)})")
 
-        # 3. Process listings
+
         new_opportunities = []
 
         for listing in listings:
@@ -271,7 +270,7 @@ class SearchController:
                         "found_at": listing.scraped_at.isoformat() if listing.scraped_at else "",
                     })
                 else:
-                    # Try per-listing FIPE lookup when we have brand_id+model_id but no global fipe_price
+
                     listing_fipe_price = None
                     if years_list and listing.year:
                         try:
@@ -341,7 +340,7 @@ class SearchController:
 
         new_opportunities.sort(key=lambda o: o["score"], reverse=True)
 
-        # Store in search cache for next 15 minutes
+
         if self._search_cache:
             try:
                 self._search_cache.set(brand, model, scrape_year, new_opportunities)

@@ -6,7 +6,7 @@ Provides shared fixtures for FastAPI TestClient and test database.
 import sys
 from pathlib import Path
 
-# Add src to Python path for imports
+
 project_root = Path(__file__).parent.parent.parent
 src_path = project_root / "src"
 if str(src_path) not in sys.path:

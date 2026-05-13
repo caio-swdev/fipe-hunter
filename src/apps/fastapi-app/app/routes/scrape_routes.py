@@ -34,7 +34,7 @@ def scrape_diag():
         except Exception as e:
             chrome_version = f"error: {e}"
 
-    # Test Xvfb + Chrome headful launch
+
     xvfb_test = "not tested"
     chrome_headful_test = "not tested"
     if xvfb and chrome:
@@ -191,7 +191,6 @@ async def browser_test():
             return {"browser": "ok", "title": title, "version": version}
     except Exception as e:
         return {"browser": "failed", "error": str(e), "traceback": traceback.format_exc()}
-
 
 
 @router.post("/webmotors")

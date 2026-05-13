@@ -12,7 +12,6 @@ from fipe_infra.repos.api_hit_repository import ApiHitRepository
 from fipe_infra.database.session import get_db_session
 
 
-# Router instance
 router = APIRouter(prefix="/fipe", tags=["fipe"])
 
 
@@ -23,7 +22,7 @@ def make_fipe_controller() -> FIPEController:
     Returns:
         FIPEController instance
     """
-    # Import here to avoid circular imports during app initialization
+
     from app.main.factories.fipe_factory import make_fipe_controller as factory_impl
     return factory_impl()
 
@@ -35,7 +34,7 @@ def get_fipe_controller() -> FIPEController:
     Returns:
         FIPEController instance (can be mocked for testing)
     """
-    # This function can be patched by tests to return a mocked controller
+
     return make_fipe_controller()
 
 
@@ -85,7 +84,7 @@ async def lookup_fipe(
     Raises:
         HTTPException: 404 if vehicle not found, 422 for validation errors
     """
-    # Trim whitespace from inputs
+
     brand = brand.strip()
     model = model.strip()
 

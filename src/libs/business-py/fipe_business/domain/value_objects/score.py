@@ -11,10 +11,10 @@ from decimal import Decimal, ROUND_HALF_UP
 class ScoreComponents:
     """Individual scoring components with weights."""
 
-    discount_score: int  # 0-100 (40% weight)
-    condition_score: int  # 0-100 (30% weight)
-    demand_score: int  # 0-100 (20% weight)
-    recency_score: int  # 0-100 (10% weight)
+    discount_score: int
+    condition_score: int
+    demand_score: int
+    recency_score: int
 
     def __post_init__(self):
         """Validate score components."""
@@ -41,7 +41,7 @@ class ScoreComponents:
         - Demand: 20%
         - Recency: 10%
         """
-        # Validate weights sum to 1.0
+
         total_weight = discount_weight + condition_weight + demand_weight + recency_weight
         if abs(total_weight - Decimal('1.0')) > Decimal('0.01'):
             raise ValueError("Weights must sum to 1.0")
@@ -53,7 +53,7 @@ class ScoreComponents:
             Decimal(self.recency_score) * recency_weight
         )
 
-        # Round to nearest integer
+
         return int(weighted_sum.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
 
 
@@ -62,7 +62,7 @@ class Score:
     """Immutable opportunity score (0-100)."""
 
     value: int
-    components: ScoreComponents = None  # type: ignore
+    components: ScoreComponents = None
 
     def __post_init__(self):
         """Validate score data."""

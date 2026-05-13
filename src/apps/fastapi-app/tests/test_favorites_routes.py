@@ -25,10 +25,6 @@ from fipe_infra.database.models import Base, OpportunityModel
 from fipe_infra.database.session import get_db_session
 
 
-# ---------------------------------------------------------------------------
-# Database fixtures
-# ---------------------------------------------------------------------------
-
 @pytest.fixture(scope="module")
 def test_db():
     engine = create_engine(
@@ -68,10 +64,6 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-# ---------------------------------------------------------------------------
-# Helper
-# ---------------------------------------------------------------------------
-
 def _seed_opportunity(db_session, listing_id: str) -> OpportunityModel:
     """Insert a minimal OpportunityModel row and return it."""
     opp = OpportunityModel(
@@ -98,10 +90,6 @@ def _seed_opportunity(db_session, listing_id: str) -> OpportunityModel:
     return opp
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
 class TestFavoritesRoutes:
 
     def test_app_import_does_not_raise(self):
@@ -112,7 +100,7 @@ class TestFavoritesRoutes:
         uvicorn from loading the application — the root cause of the
         'Carregando favoritos...' hang in production.
         """
-        from app.main import app  # noqa: F401 — import side-effects are the assertion
+        from app.main import app
         assert app is not None
 
     def test_list_favorites_empty_for_new_session(self, client):
@@ -187,7 +175,7 @@ class TestFavoritesRoutes:
         GET /api/favorites — orphan favorite IDs (opportunity not in DB) are silently
         skipped rather than raising a 500.
         """
-        # Add a favorite without seeding the matching opportunity row
+
         client.post("/api/favorites/ghost-opp-999")
 
         resp = client.get("/api/favorites")

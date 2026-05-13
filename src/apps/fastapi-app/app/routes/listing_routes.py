@@ -12,7 +12,6 @@ from fipe_infra.repos.listing_repository import SQLAlchemyListingRepository
 from fipe_infra.database.session import get_db_session
 
 
-# Pydantic models for request/response validation
 class CreateListingRequest(BaseModel):
     """Request model for creating a listing."""
 
@@ -54,7 +53,6 @@ class UpdateListingRequest(BaseModel):
     marketplace: Optional[str] = None
 
 
-# Router instance
 router = APIRouter(prefix="/listings", tags=["listings"])
 
 

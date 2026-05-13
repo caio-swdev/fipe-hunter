@@ -29,7 +29,7 @@ from fipe_infra.database.models import (
 )
 from fipe_infra.database.session import get_db_session
 
-# Use a fixed secret so tests can generate valid tokens without env vars
+
 _TEST_JWT_SECRET = "test-secret-for-pytest"
 os.environ.setdefault("ADMIN_JWT_SECRET", _TEST_JWT_SECRET)
 
@@ -40,10 +40,6 @@ def _make_auth_headers() -> dict:
     token = create_access_token()
     return {"Authorization": f"Bearer {token}"}
 
-
-# ---------------------------------------------------------------------------
-# Fixtures  (same pattern as test_favorites_routes.py)
-# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def test_db():
@@ -84,10 +80,6 @@ def client(db_session):
         yield c
     app.dependency_overrides.clear()
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _add_rate_limit_event(db, service: str, minutes_ago: float):
     db.add(RateLimitEventModel(
@@ -159,10 +151,6 @@ def _add_cache_entry(db, expired: bool = False):
     db.commit()
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
 class TestAdminHealthRoute:
 
     def test_route_returns_200(self, client):
@@ -232,9 +220,9 @@ class TestAdminHealthRoute:
 
     def test_count_24h_includes_recent_events_only(self, client, db_session):
         """count_24h must include only events within the last 24h, not older ones."""
-        _add_rate_limit_event(db_session, "webmotors", minutes_ago=60)       # within 24h
-        _add_rate_limit_event(db_session, "webmotors", minutes_ago=120)      # within 24h
-        _add_rate_limit_event(db_session, "webmotors", minutes_ago=60 * 25)  # older than 24h
+        _add_rate_limit_event(db_session, "webmotors", minutes_ago=60)
+        _add_rate_limit_event(db_session, "webmotors", minutes_ago=120)
+        _add_rate_limit_event(db_session, "webmotors", minutes_ago=60 * 25)
 
         resp = client.get("/api/admin/health")
         assert resp.json()["services"]["webmotors"]["count_24h"] == 2
@@ -247,7 +235,7 @@ class TestAdminHealthRoute:
         last_at = resp.json()["services"]["fipe"]["last_429_at"]
 
         assert last_at is not None
-        # Must be a parseable ISO datetime string
+
         datetime.fromisoformat(last_at)
 
     def test_services_tracked_independently(self, client, db_session):
@@ -266,8 +254,8 @@ class TestAdminHealthRoute:
         _add_alert(db_session, "pending")
         _add_alert(db_session, "pending")
         _add_alert(db_session, "failed")
-        _add_alert(db_session, "sent", sent_minutes_ago=30)   # sent today
-        _add_alert(db_session, "sent", sent_minutes_ago=30)   # sent today
+        _add_alert(db_session, "sent", sent_minutes_ago=30)
+        _add_alert(db_session, "sent", sent_minutes_ago=30)
 
         resp = client.get("/api/admin/health")
         alerts = resp.json()["alerts"]
@@ -278,16 +266,16 @@ class TestAdminHealthRoute:
 
     def test_sent_today_excludes_old_sent_alerts(self, client, db_session):
         """sent_today must not count alerts sent more than 24h ago."""
-        _add_alert(db_session, "sent", sent_minutes_ago=60 * 25)  # older than 24h
+        _add_alert(db_session, "sent", sent_minutes_ago=60 * 25)
 
         resp = client.get("/api/admin/health")
         assert resp.json()["alerts"]["sent_today"] == 0
 
     def test_scraping_opportunities_today(self, client, db_session):
         """opportunities_today counts only opportunities created in the last 24h."""
-        _add_opportunity(db_session, hours_ago=1)   # today
-        _add_opportunity(db_session, hours_ago=2)   # today
-        _add_opportunity(db_session, hours_ago=25)  # older than 24h
+        _add_opportunity(db_session, hours_ago=1)
+        _add_opportunity(db_session, hours_ago=2)
+        _add_opportunity(db_session, hours_ago=25)
 
         resp = client.get("/api/admin/health")
         assert resp.json()["scraping"]["opportunities_today"] == 2

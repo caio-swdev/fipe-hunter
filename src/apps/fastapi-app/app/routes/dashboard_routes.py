@@ -25,8 +25,6 @@ def get_opportunity_controller(session: Session = Depends(get_db_session)) -> Op
     repository = SQLAlchemyOpportunityRepository(session)
     return OpportunityController(repository)
 
-# Now using real database data via OpportunityController
-
 
 @router.get("/summary")
 def get_dashboard_summary(

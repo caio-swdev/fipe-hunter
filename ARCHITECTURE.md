@@ -10,7 +10,7 @@ The system follows Clean Architecture: domain logic is isolated from web framewo
 
 ![Database ERD](./documentation/diagrams/10-database-erd.png)
 
-SQLite with three core tables: `cars`, `fipe_references`, and `opportunities`. The opportunities view joins listing price against the FIPE reference to compute the delta.
+PostgreSQL (Neon) with three core tables: `listings`, `fipe_references`, and `opportunities`. The opportunities view joins listing price against the FIPE reference to compute the delta.
 
 ## Class Diagram
 

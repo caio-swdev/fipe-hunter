@@ -8,24 +8,24 @@ import { useTheme } from '@packages/design-system-engine'
 import { formatBRL } from '@packages/automotive-ui'
 
 function DiscountBadge({ value }: { value: number }) {
-  // Color grading: Red < 0%, Yellow 0-24%, Green 25%+
+  
   const getColors = () => {
     if (value < 0) {
-      // Red - Overpriced
+      
       return {
         background: '#ef4444',
         border: '#f87171',
         shadow: '0 0 8px rgba(239, 68, 68, 0.5)'
       }
     } else if (value >= 25) {
-      // Green - Great deal
+      
       return {
         background: '#22c55e',
         border: '#4ade80',
         shadow: '0 0 8px rgba(34, 197, 94, 0.5)'
       }
     } else {
-      // Yellow - Okay deal
+      
       return {
         background: '#eab308',
         border: '#facc15',
@@ -103,7 +103,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
       overflow: 'hidden',
       transition: 'all 0.3s ease',
     }}>
-      {/* Image */}
+      {}
       <div style={{
         position: 'relative',
         aspectRatio: '16/10',
@@ -136,7 +136,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
           </div>
         )}
 
-        {/* Source badge - top left */}
+        {}
         <div style={{
           position: 'absolute',
           top: '12px',
@@ -154,7 +154,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
           {o.source}
         </div>
 
-        {/* Heart button - top right, left of score badge */}
+        {}
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -185,16 +185,16 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
           />
         </button>
 
-        {/* Score badge - top right */}
+        {}
         <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
           <ScoreBadge score={o.score} />
         </div>
       </div>
 
-      {/* Content */}
+      {}
       <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-        {/* Title + meta */}
+        {}
         <div>
           <h3 style={{
             margin: 0,
@@ -228,7 +228,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
           </div>
         </div>
 
-        {/* Price block */}
+        {}
         <div>
           <p style={{
             margin: 0,
@@ -251,7 +251,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
             {formatBRL(o.listing_price)}
           </p>
 
-          {/* FIPE comparison + discount */}
+          {}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
             <span style={{ fontSize: '12px', color: colors.neutral.textMuted }}>
               FIPE{' '}
@@ -263,7 +263,7 @@ function OpportunityCard({ opportunity: o }: { opportunity: Opportunity }) {
           </div>
         </div>
 
-        {/* CTA — inverted button */}
+        {}
         <a
           href={o.url}
           target="_blank"

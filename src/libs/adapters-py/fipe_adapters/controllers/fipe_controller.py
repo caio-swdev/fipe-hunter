@@ -35,20 +35,20 @@ class FIPEController:
         Raises:
             ValueError: If validation fails
         """
-        # Validate and trim inputs
+
         self._validate_inputs(brand, model, year)
 
         brand = brand.strip()
         model = model.strip()
 
-        # Call use case
+
         result = await self.lookup_use_case.execute(
             brand=brand,
             model=model,
             year=year
         )
 
-        # Handle not found case
+
         if result is None:
             return {
                 "status": "not_found",
@@ -60,12 +60,12 @@ class FIPEController:
                 }
             }
 
-        # Extract data from result
+
         price = result["price"]
         fipe_code = result["fipe_code"]
         reference_month = result["reference_month"]
 
-        # Convert Price to DTO and return success response
+
         return {
             "status": "success",
             "data": {
@@ -91,21 +91,21 @@ class FIPEController:
         Raises:
             ValueError: If validation fails
         """
-        # Validate brand
+
         if not brand or not brand.strip():
             raise ValueError("Brand is required")
 
         if len(brand.strip()) < 2:
             raise ValueError("Brand must be at least 2 characters")
 
-        # Validate model
+
         if not model or not model.strip():
             raise ValueError("Model is required")
 
         if len(model.strip()) < 2:
             raise ValueError("Model must be at least 2 characters")
 
-        # Validate year
+
         if not isinstance(year, int):
             raise ValueError("Year must be an integer")
 

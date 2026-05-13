@@ -13,11 +13,10 @@ from fipe_infra.database.models import Base
 from fipe_infra.database.session import get_db_session
 
 
-# Test database file
 TEST_DB_PATH = "test_fipe_hunter.db"
 TEST_DATABASE_URL = f"sqlite:///./{TEST_DB_PATH}"
 
-# Create engine and sessionmaker
+
 test_engine = create_engine(
     TEST_DATABASE_URL, connect_args={"check_same_thread": False}
 )
@@ -33,22 +32,21 @@ def override_get_db():
         db.close()
 
 
-# Override dependency
 app.dependency_overrides[get_db_session] = override_get_db
 
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_test_database():
     """Create test database tables once per module."""
-    # Remove existing test database
+
     if os.path.exists(TEST_DB_PATH):
         os.remove(TEST_DB_PATH)
 
-    # Create tables
+
     Base.metadata.create_all(bind=test_engine)
     yield
 
-    # Cleanup after all tests
+
     Base.metadata.drop_all(bind=test_engine)
     if os.path.exists(TEST_DB_PATH):
         os.remove(TEST_DB_PATH)
@@ -58,7 +56,7 @@ def setup_test_database():
 def cleanup_data():
     """Clean up data between tests."""
     yield
-    # Clean tables after each test
+
     session = TestingSessionLocal()
     try:
         for table in reversed(Base.metadata.sorted_tables):
@@ -106,7 +104,7 @@ class TestCreateListingEndpoint:
     def test_create_listing_validation_error(self, client):
         """Should return 422 for invalid data (Pydantic validation)."""
         invalid_data = {
-            "brand": "V",  # Too short
+            "brand": "V",
             "model": "Gol",
             "year": 2020,
             "price": 45000.00,
@@ -120,10 +118,10 @@ class TestCreateListingEndpoint:
 
     def test_create_listing_duplicate_url(self, client, sample_listing_data):
         """Should return 409 for duplicate URL."""
-        # Create first listing
+
         client.post("/api/listings", json=sample_listing_data)
 
-        # Try to create duplicate
+
         response = client.post("/api/listings", json=sample_listing_data)
         assert response.status_code == 409
         assert "already exists" in response.json()["detail"]
@@ -144,7 +142,7 @@ class TestListListingsEndpoint:
 
     def test_list_listings_with_data(self, client, sample_listing_data):
         """Should return listings with pagination."""
-        # Create a listing first
+
         client.post("/api/listings", json=sample_listing_data)
 
         response = client.get("/api/listings?limit=10&offset=0")
@@ -158,19 +156,19 @@ class TestListListingsEndpoint:
 
     def test_list_listings_pagination(self, client, sample_listing_data):
         """Should respect pagination parameters."""
-        # Create multiple listings
+
         for i in range(5):
             listing = sample_listing_data.copy()
             listing["url"] = f"https://example.com/listing/{i}"
             client.post("/api/listings", json=listing)
 
-        # Test limit
+
         response = client.get("/api/listings?limit=2&offset=0")
         data = response.json()
         assert len(data["data"]) == 2
         assert data["pagination"]["total"] == 5
 
-        # Test offset
+
         response = client.get("/api/listings?limit=2&offset=2")
         data = response.json()
         assert len(data["data"]) == 2
@@ -181,7 +179,7 @@ class TestGetListingByUrlEndpoint:
 
     def test_get_listing_found(self, client, sample_listing_data):
         """Should return listing when found."""
-        # Create listing first
+
         client.post("/api/listings", json=sample_listing_data)
 
         url = sample_listing_data["url"]
@@ -205,7 +203,7 @@ class TestUpdateListingEndpoint:
 
     def test_update_listing_success(self, client, sample_listing_data):
         """Should update listing and return 200."""
-        # Create listing first
+
         client.post("/api/listings", json=sample_listing_data)
 
         url = sample_listing_data["url"]
@@ -234,11 +232,11 @@ class TestUpdateListingEndpoint:
 
     def test_update_listing_validation_error(self, client, sample_listing_data):
         """Should return 422 for invalid update data (Pydantic validation)."""
-        # Create listing first
+
         client.post("/api/listings", json=sample_listing_data)
 
         url = sample_listing_data["url"]
-        invalid_data = {"price": -1000}  # Negative price
+        invalid_data = {"price": -1000}
 
         response = client.put(
             f"/api/listings/by-url?url={url}", json=invalid_data
@@ -252,7 +250,7 @@ class TestDeleteListingEndpoint:
 
     def test_delete_listing_success(self, client, sample_listing_data):
         """Should delete listing and return 200."""
-        # Create listing first
+
         client.post("/api/listings", json=sample_listing_data)
 
         url = sample_listing_data["url"]
@@ -262,7 +260,7 @@ class TestDeleteListingEndpoint:
         data = response.json()
         assert data["status"] == "deleted"
 
-        # Verify deletion
+
         get_response = client.get(f"/api/listings/by-url?url={url}")
         assert get_response.status_code == 404
 
@@ -291,12 +289,12 @@ class TestMarketplaceStatsEndpoint:
 
     def test_get_stats_with_data(self, client, sample_listing_data):
         """Should return correct marketplace statistics."""
-        # Create OLX listing
+
         olx_listing = sample_listing_data.copy()
         olx_listing["marketplace"] = "olx"
         client.post("/api/listings", json=olx_listing)
 
-        # Create WebMotors listing
+
         webmotors_listing = sample_listing_data.copy()
         webmotors_listing["url"] = "https://example.com/listing/456"
         webmotors_listing["marketplace"] = "webmotors"

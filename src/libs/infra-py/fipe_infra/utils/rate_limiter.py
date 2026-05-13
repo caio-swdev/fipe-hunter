@@ -41,7 +41,7 @@ class TokenBucketRateLimiter:
             if self._tokens >= 1.0:
                 self._tokens -= 1.0
                 return 0.0
-            # Time until next token is available
+
             return (1.0 - self._tokens) * (self._period / self._max_calls)
 
     def acquire_sync(self) -> None:

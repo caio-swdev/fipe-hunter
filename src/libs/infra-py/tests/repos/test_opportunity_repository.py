@@ -56,10 +56,10 @@ def sample_opportunity() -> Opportunity:
 
 def test_save_opportunity(repository: SQLAlchemyOpportunityRepository, sample_opportunity: Opportunity):
     """Test saving an opportunity to database."""
-    # Act
+
     repository.save(sample_opportunity)
 
-    # Assert
+
     result = repository.find_by_listing_id(sample_opportunity.listing_id)
     assert result is not None
     assert result.brand == sample_opportunity.brand
@@ -69,22 +69,22 @@ def test_save_opportunity(repository: SQLAlchemyOpportunityRepository, sample_op
 
 def test_find_by_id_returns_none_when_not_found(repository: SQLAlchemyOpportunityRepository):
     """Test finding a non-existent opportunity returns None."""
-    # Act
+
     result = repository.find_by_id("nonexistent-id")
 
-    # Assert
+
     assert result is None
 
 
 def test_find_by_listing_id(repository: SQLAlchemyOpportunityRepository, sample_opportunity: Opportunity):
     """Test finding opportunity by listing ID."""
-    # Arrange
+
     repository.save(sample_opportunity)
 
-    # Act
+
     result = repository.find_by_listing_id(sample_opportunity.listing_id)
 
-    # Assert
+
     assert result is not None
     assert result.listing_id == sample_opportunity.listing_id
     assert result.score.value == sample_opportunity.score.value
@@ -92,7 +92,7 @@ def test_find_by_listing_id(repository: SQLAlchemyOpportunityRepository, sample_
 
 def test_find_active_opportunities(repository: SQLAlchemyOpportunityRepository):
     """Test finding active opportunities sorted by score."""
-    # Arrange
+
     opp1 = Opportunity(
         listing_id="listing-1",
         brand="Volkswagen",
@@ -151,52 +151,52 @@ def test_find_active_opportunities(repository: SQLAlchemyOpportunityRepository):
     repository.save(opp2)
     repository.save(opp3)
 
-    # Act
+
     results = repository.find_active(min_score=70, limit=10)
 
-    # Assert
-    assert len(results) == 2  # Only active with score >= 70
-    assert results[0].score.value == 90  # Sorted descending
+
+    assert len(results) == 2
+    assert results[0].score.value == 90
     assert results[1].score.value == 85
 
 
 def test_find_by_status(repository: SQLAlchemyOpportunityRepository, sample_opportunity: Opportunity):
     """Test finding opportunities by status."""
-    # Arrange
+
     repository.save(sample_opportunity)
 
-    # Act
+
     active_results = repository.find_by_status("active", limit=10)
     sold_results = repository.find_by_status("sold", limit=10)
 
-    # Assert
+
     assert len(active_results) == 1
     assert len(sold_results) == 0
 
 
 def test_count_by_status(repository: SQLAlchemyOpportunityRepository, sample_opportunity: Opportunity):
     """Test counting opportunities by status."""
-    # Arrange
+
     repository.save(sample_opportunity)
 
-    # Act
+
     active_count = repository.count_by_status("active")
     sold_count = repository.count_by_status("sold")
 
-    # Assert
+
     assert active_count == 1
     assert sold_count == 0
 
 
 def test_update_status(repository: SQLAlchemyOpportunityRepository, sample_opportunity: Opportunity):
     """Test updating opportunity status."""
-    # Arrange
+
     repository.save(sample_opportunity)
 
-    # Act
+
     repository.update_status(sample_opportunity.listing_id, "sold")
 
-    # Assert
+
     result = repository.find_by_listing_id(sample_opportunity.listing_id)
     assert result is not None
     assert result.status == "sold"

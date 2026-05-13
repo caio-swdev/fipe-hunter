@@ -48,10 +48,10 @@ def sample_cache_entry() -> PriceCache:
 
 def test_save_cache_entry(repository: SQLAlchemyCacheRepository, sample_cache_entry: PriceCache):
     """Test saving a cache entry to database."""
-    # Act
+
     repository.save(sample_cache_entry)
 
-    # Assert
+
     result = repository.find_by_key(sample_cache_entry.cache_key)
     assert result is not None
     assert result.cache_key == sample_cache_entry.cache_key
@@ -60,22 +60,22 @@ def test_save_cache_entry(repository: SQLAlchemyCacheRepository, sample_cache_en
 
 def test_find_by_key_returns_none_when_not_found(repository: SQLAlchemyCacheRepository):
     """Test finding a non-existent cache entry returns None."""
-    # Act
+
     result = repository.find_by_key("nonexistent-key")
 
-    # Assert
+
     assert result is None
 
 
 def test_find_by_key_returns_cache_entry(repository: SQLAlchemyCacheRepository, sample_cache_entry: PriceCache):
     """Test finding existing cache entry by key."""
-    # Arrange
+
     repository.save(sample_cache_entry)
 
-    # Act
+
     result = repository.find_by_key(sample_cache_entry.cache_key)
 
-    # Assert
+
     assert result is not None
     assert result.cache_key == sample_cache_entry.cache_key
     assert result.version == sample_cache_entry.version
@@ -83,20 +83,20 @@ def test_find_by_key_returns_cache_entry(repository: SQLAlchemyCacheRepository, 
 
 def test_delete_cache_entry(repository: SQLAlchemyCacheRepository, sample_cache_entry: PriceCache):
     """Test deleting a cache entry."""
-    # Arrange
+
     repository.save(sample_cache_entry)
 
-    # Act
+
     repository.delete(sample_cache_entry.cache_key)
 
-    # Assert
+
     result = repository.find_by_key(sample_cache_entry.cache_key)
     assert result is None
 
 
 def test_clear_expired_removes_expired_entries(repository: SQLAlchemyCacheRepository):
     """Test clearing expired cache entries."""
-    # Arrange
+
     expired_entry = PriceCache(
         cache_key="fiat-uno-2019",
         brand="Fiat",
@@ -106,7 +106,7 @@ def test_clear_expired_removes_expired_entries(repository: SQLAlchemyCacheReposi
         version="Uno 1.0",
         fipe_table_date="dezembro/2023",
         cached_at=datetime.utcnow() - timedelta(days=10),
-        expires_at=datetime.utcnow() - timedelta(days=1)  # Expired
+        expires_at=datetime.utcnow() - timedelta(days=1)
     )
 
     valid_entry = PriceCache(
@@ -118,24 +118,24 @@ def test_clear_expired_removes_expired_entries(repository: SQLAlchemyCacheReposi
         version="Onix 1.0",
         fipe_table_date="janeiro/2024",
         cached_at=datetime.utcnow(),
-        expires_at=datetime.utcnow() + timedelta(days=7)  # Not expired
+        expires_at=datetime.utcnow() + timedelta(days=7)
     )
 
     repository.save(expired_entry)
     repository.save(valid_entry)
 
-    # Act
+
     deleted_count = repository.clear_expired()
 
-    # Assert
+
     assert deleted_count == 1
-    assert repository.find_by_key("fiat-uno-2019") is None  # Expired entry should be deleted
-    assert repository.find_by_key("chevrolet-onix-2021") is not None  # Valid entry should remain
+    assert repository.find_by_key("fiat-uno-2019") is None
+    assert repository.find_by_key("chevrolet-onix-2021") is not None
 
 
 def test_save_duplicate_key_updates_existing(repository: SQLAlchemyCacheRepository, sample_cache_entry: PriceCache):
     """Test that saving duplicate key updates existing entry."""
-    # Arrange
+
     repository.save(sample_cache_entry)
 
     updated_entry = PriceCache(
@@ -143,18 +143,18 @@ def test_save_duplicate_key_updates_existing(repository: SQLAlchemyCacheReposito
         brand="Volkswagen",
         model="Gol",
         year=2020,
-        price=Price.from_float(40000.0),  # Different price
+        price=Price.from_float(40000.0),
         version="Gol 1.6 (Flex)",
         fipe_table_date="fevereiro/2024",
         cached_at=datetime.utcnow(),
         expires_at=datetime.utcnow() + timedelta(days=7)
     )
 
-    # Act
+
     repository.save(updated_entry)
 
-    # Assert
+
     result = repository.find_by_key(sample_cache_entry.cache_key)
     assert result is not None
-    assert result.price.to_float() == 40000.0  # Updated
+    assert result.price.to_float() == 40000.0
     assert result.version == "Gol 1.6 (Flex)"

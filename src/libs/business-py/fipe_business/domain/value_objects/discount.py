@@ -12,8 +12,8 @@ from .price import Price
 class Discount:
     """Immutable discount value."""
 
-    percentage: Decimal  # 0-100 scale (e.g., 25.00 for 25%)
-    amount: Price  # Absolute discount amount
+    percentage: Decimal
+    amount: Price
 
     def __post_init__(self):
         """Validate discount data."""
@@ -23,7 +23,7 @@ class Discount:
         if not isinstance(self.amount, Price):
             raise TypeError("Discount amount must be Price type")
 
-        # Round percentage to 2 decimal places
+
         object.__setattr__(
             self,
             'percentage',

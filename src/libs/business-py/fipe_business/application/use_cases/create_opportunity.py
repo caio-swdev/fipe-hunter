@@ -66,8 +66,7 @@ class CreateOpportunityUseCase:
             updated_at=now
         )
 
-        # Attach image_url as an out-of-band attribute so the repo can persist it
-        # without polluting the domain entity's type signature
+
         if image_url is not None:
             object.__setattr__(opportunity, 'image_url', image_url)
 

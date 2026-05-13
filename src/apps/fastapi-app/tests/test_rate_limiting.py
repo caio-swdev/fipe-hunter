@@ -20,10 +20,6 @@ from fipe_infra.database.models import Base
 from fipe_infra.database.session import get_db_session
 
 
-# ---------------------------------------------------------------------------
-# Database fixture (in-memory, same as test_search_routes.py)
-# ---------------------------------------------------------------------------
-
 @pytest.fixture(scope="module")
 def test_db():
     engine = create_engine(
@@ -63,10 +59,6 @@ def client(db_session):
     app.dependency_overrides.clear()
 
 
-# ---------------------------------------------------------------------------
-# Reset slowapi storage between tests
-# ---------------------------------------------------------------------------
-
 @pytest.fixture(autouse=True)
 def reset_limiter():
     """Clear all rate-limit counters before each test."""
@@ -75,10 +67,6 @@ def reset_limiter():
         limiter._storage.reset()
     yield
 
-
-# ---------------------------------------------------------------------------
-# Helper: mock scrapers at the factory level
-# ---------------------------------------------------------------------------
 
 @contextmanager
 def mock_scrapers_factory(olx_listings=None, wm_listings=None):
@@ -109,10 +97,6 @@ def _search(client, session_cookie: str, brand="Honda", model="Civic"):
     )
 
 
-# ---------------------------------------------------------------------------
-# Rate Limit Tests
-# ---------------------------------------------------------------------------
-
 class TestPerSessionRateLimit:
 
     def test_10_requests_succeed(self, client):
@@ -135,19 +119,15 @@ class TestPerSessionRateLimit:
     def test_different_sessions_independent_quota(self, client):
         """Session A exhausted → Session B still gets 200."""
         with mock_scrapers_factory():
-            # Exhaust session A
+
             for _ in range(10):
                 _search(client, "rl-test-session-A")
 
-            # Session B should still succeed
+
             resp_b = _search(client, "rl-test-session-B")
 
         assert resp_b.status_code == 200
 
-
-# ---------------------------------------------------------------------------
-# Cache Integration Test
-# ---------------------------------------------------------------------------
 
 class TestSearchCache:
 
@@ -186,9 +166,9 @@ class TestSearchCache:
                  "fipe_business.application.use_cases.lookup_fipe_price.LookupFIPEPriceUseCase.execute",
              ) as mock_fipe:
 
-            mock_fipe.return_value = None  # No FIPE price (auto-AsyncMocked for async execute)
+            mock_fipe.return_value = None
 
-            # First search — hits scrapers
+
             r1 = client.post(
                 "/api/search/vehicle",
                 json=payload,
@@ -198,7 +178,7 @@ class TestSearchCache:
             data1 = r1.json()
             assert data1.get("cached") is False
 
-            # Second search — same params, same session, within TTL
+
             r2 = client.post(
                 "/api/search/vehicle",
                 json=payload,
@@ -207,12 +187,12 @@ class TestSearchCache:
             assert r2.status_code == 200
             data2 = r2.json()
 
-        # Scraper should have been instantiated exactly once (first request only)
+
         assert mock_olx.call_count == 1, (
             f"OLX scraper was called {mock_olx.call_count} times; expected 1 (second should use cache)"
         )
 
-        # Second response explicitly flagged as cached
+
         assert data2.get("cached") is True, (
             f"Expected 'cached': true on second response but got: {data2.get('cached')}"
         )

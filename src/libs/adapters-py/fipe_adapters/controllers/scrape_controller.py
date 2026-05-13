@@ -46,7 +46,7 @@ class ScrapeController:
             Exception: If scraping fails
         """
         try:
-            # Execute scraping
+
             stats = self.scrape_listings.execute(max_listings=limit)
 
             return {
@@ -86,7 +86,7 @@ class ScrapeController:
             Exception: If processing fails
         """
         try:
-            # Fetch listings from repository
+
             listings = self.listing_repository.list_all(limit=limit, offset=offset)
 
             if not listings:
@@ -103,11 +103,11 @@ class ScrapeController:
                     }
                 }
 
-            # Generate listing IDs (using URL hash for simplicity)
+
             def listing_id_generator(listing):
                 return str(hash(listing.url))
 
-            # Process listings through pipeline
+
             stats = await self.process_listings.execute(
                 listings=listings,
                 listing_id_generator=listing_id_generator
@@ -134,7 +134,7 @@ class ScrapeController:
             Response dictionary with status and statistics
         """
         try:
-            # Get listing counts by marketplace
+
             olx_count = self.listing_repository.count_by_marketplace("olx")
             total_count = self.listing_repository.count_all()
 
@@ -143,8 +143,8 @@ class ScrapeController:
                 "data": {
                     "total_listings": total_count,
                     "olx_listings": olx_count,
-                    "last_scrape": None,  # TODO: Track last scrape timestamp
-                    "status": "idle"  # TODO: Track active scraping status
+                    "last_scrape": None,
+                    "status": "idle"
                 }
             }
 

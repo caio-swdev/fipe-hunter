@@ -25,14 +25,14 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
     event_repo = SQLAlchemyRateLimitEventRepository(session)
     api_hit_repo = ApiHitRepository(session)
 
-    # --- Opportunistic cleanup (called every ~30s via health poll) ---
+
     try:
         api_hit_repo.cleanup(retain_days=30)
         event_repo.cleanup(retain_days=30)
     except Exception:
         pass
 
-    # --- Services ---
+
     services: Dict[str, Any] = {}
     for svc in ("fipe", "olx", "webmotors"):
         last_at = event_repo.last_event_at(svc)
@@ -47,7 +47,7 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
             "count_24h": count,
         }
 
-    # --- Alerts ---
+
     pending = session.query(AlertModel).filter(AlertModel.status == "pending").count()
     failed = session.query(AlertModel).filter(AlertModel.status == "failed").count()
     sent_today = (
@@ -56,7 +56,7 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
         .count()
     )
 
-    # --- Scraping ---
+
     opportunities_today = (
         session.query(OpportunityModel)
         .filter(OpportunityModel.created_at >= since_24h)
@@ -68,7 +68,7 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
         .count()
     )
 
-    # --- Cache (FIPE prices) ---
+
     total_cache = session.query(PriceCacheModel).count()
     expired_cache = (
         session.query(PriceCacheModel)
@@ -76,7 +76,7 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
         .count()
     )
 
-    # --- Search Cache (scrape results, fixed 2h TTL) ---
+
     search_total = session.query(SearchCacheModel).count()
     search_expired = (
         session.query(SearchCacheModel)
@@ -84,7 +84,7 @@ def get_admin_health(session: Session) -> Dict[str, Any]:
         .count()
     )
 
-    # --- Catalog Cache (MMY adaptive TTL) ---
+
     catalog_total = session.query(CatalogCacheModel).count()
     catalog_expired = (
         session.query(CatalogCacheModel)

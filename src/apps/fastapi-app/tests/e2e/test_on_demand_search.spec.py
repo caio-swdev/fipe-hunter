@@ -18,7 +18,7 @@ import pytest
 import requests
 from playwright.sync_api import Page, expect
 
-# Root DB used by the running server (sqlite:///./fipe_hunter.db from src/ as CWD)
+
 _DB_PATH = Path(__file__).parent.parent.parent.parent.parent / "fipe_hunter.db"
 
 
@@ -67,7 +67,7 @@ class TestOnDemandSearchE2E:
         """
         page.goto(BASE_URL)
 
-        # Locate form elements
+
         brand_input = page.get_by_placeholder("e.g. Honda", exact=True)
         model_input = page.get_by_placeholder("e.g. Civic", exact=True)
         year_input = page.get_by_placeholder("Optional")
@@ -78,21 +78,21 @@ class TestOnDemandSearchE2E:
         expect(year_input).to_be_visible()
         expect(submit_button).to_be_visible()
 
-        # Fill and submit
+
         self._fill_search_form(page, "Toyota", "Corolla", "2022")
         self._submit_form(page)
 
-        # Wait for loading state
+
         expect(page.locator('button:has-text("Searching")')).to_be_visible(timeout=3000)
 
-        # Wait for FIPE result card
+
         expect(page.get_by_text("FIPE Reference Price")).to_be_visible(timeout=15000)
 
-        # Verify vehicle info
+
         expect(page.get_by_text("Toyota")).to_be_visible()
         expect(page.get_by_text("Corolla")).to_be_visible()
 
-        # Button should be re-enabled
+
         expect(page.locator('button:has-text("Search Now")')).to_be_enabled()
 
     def test_search_with_fipe_error(self, page: Page):
@@ -105,10 +105,10 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "Honda", "Civic", "2020")
         self._submit_form(page)
 
-        # Wait for search to complete (button re-enabled)
+
         expect(page.locator('button:has-text("Search Now")')).to_be_enabled(timeout=15000)
 
-        # FIPE error should show amber warning
+
         expect(page.get_by_text("FIPE lookup failed")).to_be_visible(timeout=5000)
 
     def test_form_validation_empty_fields(self, page: Page):
@@ -120,10 +120,10 @@ class TestOnDemandSearchE2E:
         submit_button = page.locator('button:has-text("Search Now")')
         submit_button.click()
 
-        # HTML5 validation should prevent submission
+
         expect(submit_button).to_be_visible()
 
-        # Verify required attribute
+
         brand_input = page.get_by_placeholder("e.g. Honda", exact=True)
         expect(brand_input).to_have_attribute("required", "")
 
@@ -137,11 +137,11 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "H", "C")
         self._submit_form(page)
 
-        # No loading state should appear (early return)
+
         page.wait_for_timeout(500)
         expect(page.locator('button:has-text("Search Now")')).to_be_visible()
 
-        # Verify minlength attribute
+
         brand_input = page.get_by_placeholder("e.g. Honda", exact=True)
         expect(brand_input).to_have_attribute("minlength", "2")
 
@@ -155,11 +155,11 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "Honda", "Civic", "1900")
         self._submit_form(page)
 
-        # No loading state (year out of range → early return)
+
         page.wait_for_timeout(500)
         expect(page.locator('button:has-text("Search Now")')).to_be_visible()
 
-        # Verify min/max attributes
+
         year_input = page.get_by_placeholder("Optional")
         expect(year_input).to_have_attribute("min", "1950")
         expect(year_input).to_have_attribute("max", "2026")
@@ -173,17 +173,17 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "Toyota", "Corolla", "2022")
         self._submit_form(page)
 
-        # Button text changes to "Searching..."
+
         searching_button = page.locator('button:has-text("Searching")')
         expect(searching_button).to_be_visible(timeout=3000)
 
-        # Button is disabled during loading
+
         expect(searching_button).to_be_disabled()
 
-        # Spinner icon visible (Loader2 with animate-spin)
+
         expect(page.locator('button svg.animate-spin')).to_be_visible()
 
-        # After completion, button re-enabled
+
         expect(page.locator('button:has-text("Search Now")')).to_be_enabled(timeout=15000)
 
     def test_error_handling_network_failure(self, page: Page):
@@ -192,13 +192,13 @@ class TestOnDemandSearchE2E:
         """
         page.goto(BASE_URL)
 
-        # Block the API endpoint
+
         page.route("**/api/search/vehicle", lambda route: route.abort())
 
         self._fill_search_form(page, "Honda", "Civic", "2020")
         self._submit_form(page)
 
-        # Error message rendered (AlertCircle + error.message in red)
+
         expect(page.locator('.text-red-600')).to_be_visible(timeout=10000)
 
     def test_error_handling_vehicle_not_found(self, page: Page):
@@ -210,10 +210,10 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "NonExistentBrand", "NonExistentModel", "2000")
         self._submit_form(page)
 
-        # Wait for response to complete
+
         expect(page.locator('button:has-text("Search Now")')).to_be_enabled(timeout=15000)
 
-        # Should show error, FIPE error, or no results
+
         error_or_result = page.locator('.text-red-600, .text-amber-700, :text("No listings found")')
         expect(error_or_result.first).to_be_visible(timeout=5000)
 
@@ -226,7 +226,7 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "  Toyota  ", "  Corolla  ", "2022")
         self._submit_form(page)
 
-        # FIPE result proves trimming worked
+
         expect(page.get_by_text("FIPE Reference Price")).to_be_visible(timeout=15000)
         expect(page.get_by_text("Toyota")).to_be_visible()
         expect(page.get_by_text("Corolla")).to_be_visible()
@@ -237,14 +237,14 @@ class TestOnDemandSearchE2E:
         """
         page.goto(BASE_URL)
 
-        # Fill only brand and model, no year
+
         self._fill_search_form(page, "Honda", "Civic")
         self._submit_form(page)
 
-        # Should start searching
+
         expect(page.locator('button:has-text("Searching")')).to_be_visible(timeout=3000)
 
-        # Should eventually complete
+
         expect(page.locator('button:has-text("Search Now")')).to_be_enabled(timeout=15000)
 
     def test_multiple_searches_consecutively(self, page: Page):
@@ -253,13 +253,13 @@ class TestOnDemandSearchE2E:
         """
         page.goto(BASE_URL)
 
-        # First search: Toyota Corolla
+
         self._fill_search_form(page, "Toyota", "Corolla", "2022")
         self._submit_form(page)
         expect(page.get_by_text("FIPE Reference Price")).to_be_visible(timeout=15000)
         expect(page.get_by_text("Toyota")).to_be_visible()
 
-        # Second search: Honda Civic
+
         self._fill_search_form(page, "Honda", "Civic", "2020")
         self._submit_form(page)
         expect(page.get_by_text("Honda")).to_be_visible(timeout=15000)
@@ -271,16 +271,16 @@ class TestOnDemandSearchE2E:
         """
         page.goto(BASE_URL)
 
-        # Resize to mobile
+
         page.set_viewport_size({"width": 375, "height": 667})
 
-        # Verify form elements visible
+
         expect(page.get_by_placeholder("e.g. Honda", exact=True)).to_be_visible()
         expect(page.get_by_placeholder("e.g. Civic", exact=True)).to_be_visible()
         expect(page.get_by_placeholder("Optional")).to_be_visible()
         expect(page.locator('button:has-text("Search Now")')).to_be_visible()
 
-        # Fill and submit works on mobile
+
         self._fill_search_form(page, "Toyota", "Corolla")
         self._submit_form(page)
         expect(page.locator('button:has-text("Searching")')).to_be_visible(timeout=3000)
@@ -294,15 +294,15 @@ class TestOnDemandSearchE2E:
         self._fill_search_form(page, "Toyota", "Corolla", "2022")
         self._submit_form(page)
 
-        # Wait for results
+
         expect(page.get_by_text("FIPE Reference Price")).to_be_visible(timeout=15000)
 
-        # Click clear
+
         clear_button = page.get_by_text("Clear search")
         expect(clear_button).to_be_visible()
         clear_button.click()
 
-        # FIPE card should disappear
+
         expect(page.get_by_text("FIPE Reference Price")).not_to_be_visible(timeout=3000)
 
 
@@ -334,39 +334,39 @@ class TestOpportunitiesSearchE2E:
         page.set_viewport_size({"width": 1920, "height": 1080})
         page.goto(BASE_URL)
 
-        # Clear cache + existing rows so this search is guaranteed fresh
+
         _purge_vehicle("mitsubishi", "outlander", 2016)
 
-        # Capture dashboard metric before search (after purge)
+
         summary_before = requests.get("http://localhost:8000/api/dashboard/summary", timeout=5).json()
         total_before = summary_before["data"]["total_opportunities"]
 
-        # Brand
+
         page.get_by_role("option", name="M Mitsubishi").click()
         page.wait_for_selector("text=Carregando modelos...", state="hidden", timeout=15000)
 
-        # Model
+
         self._select_combobox_option(page, "Modelo", "OUTLANDER")
 
-        # Year
+
         page.get_by_role("button", name="2016").click()
         page.wait_for_selector("text=Versão (buscando...)", state="hidden", timeout=15000)
 
-        # Version — full label is "3.0/ GT 3.0 V6 Aut.", match by substring
+
         self._select_combobox_option_by_text(page, "Versão", "GT 3.0 V6")
 
-        # Search
+
         page.get_by_role("button", name="Buscar").click()
         expect(page.get_by_text("Buscando...")).to_be_visible(timeout=5000)
 
-        # FIPE card rendered
+
         expect(page.get_by_text("Referência FIPE")).to_be_visible(timeout=30000)
 
-        # Results list populated
+
         expect(page.get_by_text("Exibindo", exact=False)).to_be_visible()
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible()
 
-        # Assert dashboard metric increased
+
         summary_after = requests.get("http://localhost:8000/api/dashboard/summary", timeout=5).json()
         total_after = summary_after["data"]["total_opportunities"]
         assert total_after > total_before, (
@@ -374,5 +374,5 @@ class TestOpportunitiesSearchE2E:
             f"(before={total_before}, after={total_after})"
         )
 
-        # Pause so the rendered list is visible before browser closes
+
         page.wait_for_timeout(5000)

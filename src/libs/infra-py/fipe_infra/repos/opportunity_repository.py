@@ -29,7 +29,7 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
         Converts Opportunity entity to OpportunityModel, extracting scalar
         values from value objects for storage.
         """
-        # Check if opportunity already exists
+
         existing = self.session.query(OpportunityModel).filter_by(
             listing_id=opportunity.listing_id
         ).first()
@@ -37,7 +37,7 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
         image_url = getattr(opportunity, 'image_url', None)
 
         if existing:
-            # Update existing record
+
             existing.brand = opportunity.brand
             existing.model = opportunity.model
             existing.year = opportunity.year
@@ -54,7 +54,7 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
             existing.image_url = image_url
             existing.updated_at = opportunity.updated_at
         else:
-            # Create new record
+
             model = OpportunityModel(
                 listing_id=opportunity.listing_id,
                 brand=opportunity.brand,
@@ -148,20 +148,18 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
 
         Reconstructs value objects from scalar database values.
         """
-        # Reconstruct Price value objects
+
         listing_price = Price.from_float(model.listing_price)
         fipe_price = Price.from_float(model.fipe_price)
 
-        # Reconstruct Discount value object from stored components
-        # Use Price constructor directly to allow negative amounts (when listing > FIPE)
+
         discount_amount_price = Price(amount=Decimal(str(model.discount_amount)))
         discount = Discount(
             percentage=Decimal(str(model.discount_percentage)),
             amount=discount_amount_price
         )
 
-        # Reconstruct Score value object
-        # Create default ScoreComponents since we don't store them
+
         score_components = ScoreComponents(
             discount_score=0,
             condition_score=0,
@@ -170,7 +168,7 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
         )
         score = Score(value=model.score_value, components=score_components)
 
-        # Reconstruct Opportunity entity
+
         opp = Opportunity(
             listing_id=model.listing_id,
             brand=model.brand,
@@ -188,6 +186,6 @@ class SQLAlchemyOpportunityRepository(IOpportunityRepository):
             created_at=model.created_at,
             updated_at=model.updated_at
         )
-        # Attach image_url as a non-domain field for controller serialization
+
         object.__setattr__(opp, 'image_url', getattr(model, 'image_url', None))
         return opp

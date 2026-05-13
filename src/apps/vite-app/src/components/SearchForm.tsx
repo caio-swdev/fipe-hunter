@@ -36,7 +36,7 @@ const BRANDS: Brand[] = [
 
 const YEARS = Array.from({ length: 37 }, (_, i) => 2026 - i)
 
-/** Extract base model name — first word only (e.g. "Civic Sed. LXL" → "Civic"). */
+
 function extractBaseModel(fipeName: string): string {
   return fipeName.split(' ')[0]
 }
@@ -52,20 +52,20 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
   const { theme } = useTheme()
   const { colors, glass, spacing, borders, transitions } = theme
 
-  // Step 1 — Marca
+  
   const [brand, setBrand] = useState('')
   const [fipeBrandId, setFipeBrandId] = useState('')
   const [fipeModels, setFipeModels] = useState<FipeModel[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
   const [modelsError, setModelsError] = useState<string | null>(null)
 
-  // Step 2 — Modelo
+  
   const [modelBase, setModelBase] = useState('')
 
-  // Step 3 — Ano
+  
   const [year, setYear] = useState<number | null>(null)
 
-  // Step 4 — Versão (filtered by year when set)
+  
   const [filteredVersions, setFilteredVersions] = useState<FipeVersion[]>([])
   const [selectedVersion, setSelectedVersion] = useState<{ id: number; fullName: string; displayName: string; yearCode: string } | null>(null)
   const [versionLoading, setVersionLoading] = useState(false)
@@ -77,7 +77,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     onError: () => onSearchError?.(),
   })
 
-  // ── Step 1: brand selected → fetch FIPE models
+  
   async function handleBrandChange(brandId: string) {
     setBrand(brandId)
     setFipeBrandId('')
@@ -101,7 +101,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     }
   }
 
-  // ── Step 2: modelo selected → if year already set, fetch filtered versions
+  
   async function handleModelBaseChange(base: string) {
     setModelBase(base)
     setSelectedVersion(null)
@@ -114,7 +114,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     }
   }
 
-  // ── Step 3: ano selected → fetch versions filtered by year
+  
   async function handleYearSelect(y: number) {
     setYear(y)
     setSelectedVersion(null)
@@ -125,7 +125,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     }
   }
 
-  // ── Shared: fetch versions filtered by year from backend
+  
   async function loadFilteredVersions(brandId: string, base: string, yr: number) {
     setVersionLoading(true)
     setFilteredVersions([])
@@ -142,7 +142,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     }
   }
 
-  // ── Step 3: versão selected — year_code comes from the backend
+  
   function handleVersionChange(displayName: string) {
     const found = versionsForPicker.find(v => v.displayName === displayName)
     if (!found) return
@@ -150,10 +150,10 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
     setVersionError(null)
   }
 
-  // ── Derived: unique base model names
+  
   const baseModelNames: string[] = [...new Set(fipeModels.map(m => extractBaseModel(m.name)))]
 
-  // ── Derived: versions for picker (filtered by year if set, otherwise all from fipeModels)
+  
   const versionsForPicker: { id: number; fullName: string; displayName: string; yearCode: string }[] =
     year && filteredVersions.length > 0
       ? filteredVersions.map(v => ({
@@ -173,7 +173,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
             }))
         : []
 
-  // ── Submit
+  
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!brand || !modelBase || !selectedVersion) return
@@ -210,7 +210,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
         gap: spacing.lg,
       }}
     >
-      {/* Step 1 — Marca */}
+      {}
       <BrandPicker
         brands={BRANDS}
         value={brand}
@@ -232,7 +232,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
         </div>
       )}
 
-      {/* Step 2 — Modelo */}
+      {}
       <ModelPicker
         models={baseModelNames}
         value={modelBase}
@@ -242,7 +242,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
         disabled={!brand || modelsLoading || baseModelNames.length === 0}
       />
 
-      {/* Step 3 — Ano */}
+      {}
       <YearPicker
         title="Ano"
         years={YEARS}
@@ -251,7 +251,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
         defaultExpanded={true}
       />
 
-      {/* Step 3 — Versão */}
+      {}
       <ModelPicker
         models={versionsForPicker.map(v => v.displayName)}
         value={selectedVersion?.displayName ?? ''}
@@ -282,7 +282,7 @@ export function SearchForm({ onResults, onSearchStart, onSearchError, onSearchPa
         </div>
       )}
 
-      {/* Submit */}
+      {}
       <button
         type="submit"
         disabled={mutation.isPending || !canSubmit}

@@ -19,12 +19,8 @@ export function useToggleFavorite() {
   const { addFavoriteId, removeFavoriteId } = useFavoritesStore()
 
   return useMutation({
-    // TanStack Query v5 stores mutationFn in a ref updated on every render.
-    // If mutationFn read from the Zustand store, onMutate's optimistic update
-    // would trigger a re-render that swaps the ref to a new closure where the
-    // id is already present — causing DELETE instead of POST (or vice-versa).
-    // Fix: receive the initial state as part of the mutation variables so the
-    // decision is made at call-site (click time) rather than at execution time.
+    
+    
     mutationFn: async ({ id, wasFavorited }: ToggleVars) => {
       if (wasFavorited) {
         await removeFavorite(id)
@@ -34,7 +30,7 @@ export function useToggleFavorite() {
       return id
     },
     onMutate: ({ id, wasFavorited }: ToggleVars) => {
-      // Optimistic update using the caller-supplied initial state
+      
       if (wasFavorited) {
         removeFavoriteId(id)
       } else {
@@ -43,7 +39,7 @@ export function useToggleFavorite() {
       return { opportunityId: id, wasFavorited }
     },
     onError: (_err, _vars, context) => {
-      // Rollback on failure
+      
       if (!context) return
       if (context.wasFavorited) {
         addFavoriteId(context.opportunityId)

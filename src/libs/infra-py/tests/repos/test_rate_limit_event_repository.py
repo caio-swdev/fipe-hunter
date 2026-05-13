@@ -16,10 +16,6 @@ from fipe_infra.database.models import Base
 from fipe_infra.repos.rate_limit_event_repository import SQLAlchemyRateLimitEventRepository
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 @pytest.fixture
 def db_session() -> Session:
     engine = create_engine("sqlite:///:memory:")
@@ -33,10 +29,6 @@ def db_session() -> Session:
 def repo(db_session: Session) -> SQLAlchemyRateLimitEventRepository:
     return SQLAlchemyRateLimitEventRepository(db_session)
 
-
-# ---------------------------------------------------------------------------
-# record()
-# ---------------------------------------------------------------------------
 
 def test_record_persists_event(repo, db_session):
     """record() must insert a row with the correct field values."""
@@ -73,17 +65,13 @@ def test_record_multiple_events(repo, db_session):
     assert db_session.query(RateLimitEventModel).count() == 3
 
 
-# ---------------------------------------------------------------------------
-# count_since()
-# ---------------------------------------------------------------------------
-
 def test_count_since_counts_events_after_cutoff(repo):
     """count_since() returns only events at or after the since datetime."""
     now = datetime.utcnow()
     two_hours_ago = now - timedelta(hours=2)
     thirty_min_ago = now - timedelta(minutes=30)
 
-    # One old event (2h ago) and two recent events (30m ago)
+
     from fipe_infra.database.models import RateLimitEventModel
     from sqlalchemy.orm import Session
     session = repo._session
@@ -122,10 +110,6 @@ def test_count_since_returns_zero_for_empty_table(repo):
     assert repo.count_since("fipe", since) == 0
 
 
-# ---------------------------------------------------------------------------
-# last_event_at()
-# ---------------------------------------------------------------------------
-
 def test_last_event_at_returns_most_recent(repo):
     """last_event_at() returns the timestamp of the most-recent event."""
     now = datetime.utcnow()
@@ -141,7 +125,7 @@ def test_last_event_at_returns_most_recent(repo):
     result = repo.last_event_at("fipe")
 
     assert result is not None
-    # Allow 1-second tolerance for datetime comparison
+
     assert abs((result - newer).total_seconds()) < 1
 
 

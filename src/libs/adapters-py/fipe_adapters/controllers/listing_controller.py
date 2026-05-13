@@ -35,7 +35,7 @@ class ListingController:
             ValueError: If validation fails
             IntegrityError: If URL already exists
         """
-        # Create entity (validation happens in entity __post_init__)
+
         listing = Listing(
             brand=request_data["brand"],
             model=request_data["model"],
@@ -48,7 +48,7 @@ class ListingController:
             scraped_at=datetime.utcnow()
         )
 
-        # Persist via repository
+
         self.repository.save(listing)
 
         return {
@@ -113,7 +113,7 @@ class ListingController:
         Returns:
             Response dictionary with status and message
         """
-        # Check if exists first
+
         listing = self.repository.find_by_url(url)
         if listing is None:
             return {
@@ -142,7 +142,7 @@ class ListingController:
         Raises:
             ValueError: If validation fails
         """
-        # Find existing listing
+
         existing = self.repository.find_by_url(url)
         if existing is None:
             return {
@@ -150,7 +150,7 @@ class ListingController:
                 "message": "Listing not found"
             }
 
-        # Create updated entity (merge existing with updates)
+
         updated_listing = Listing(
             brand=update_data.get("brand", existing.brand),
             model=update_data.get("model", existing.model),
@@ -158,12 +158,12 @@ class ListingController:
             price=update_data.get("price", existing.price),
             mileage=update_data.get("mileage", existing.mileage),
             condition=update_data.get("condition", existing.condition),
-            url=existing.url,  # URL is immutable
+            url=existing.url,
             marketplace=update_data.get("marketplace", existing.marketplace),
             scraped_at=existing.scraped_at
         )
 
-        # Persist update
+
         self.repository.update(updated_listing)
 
         return {

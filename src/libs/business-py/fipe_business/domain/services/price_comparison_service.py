@@ -10,8 +10,8 @@ from ..value_objects import Price, Discount
 class PriceComparisonService:
     """Service for comparing prices and identifying opportunities."""
 
-    DEFAULT_MIN_THRESHOLD = Decimal('20.00')  # 20%
-    DEFAULT_MAX_THRESHOLD = Decimal('50.00')  # 50%
+    DEFAULT_MIN_THRESHOLD = Decimal('20.00')
+    DEFAULT_MAX_THRESHOLD = Decimal('50.00')
 
     @classmethod
     def compare_prices(
@@ -35,17 +35,17 @@ class PriceComparisonService:
         min_thresh = min_threshold or cls.DEFAULT_MIN_THRESHOLD
         max_thresh = max_threshold or cls.DEFAULT_MAX_THRESHOLD
 
-        # Validate prices
+
         if fipe_price.amount == 0:
             raise ValueError("FIPE price cannot be zero")
 
         if listing_price.amount <= 0:
             raise ValueError("Listing price must be positive")
 
-        # Calculate discount
+
         discount = Discount.calculate(listing_price, fipe_price)
 
-        # Determine status
+
         if discount.percentage < 0:
             status = "overpriced"
         elif discount.percentage < min_thresh:

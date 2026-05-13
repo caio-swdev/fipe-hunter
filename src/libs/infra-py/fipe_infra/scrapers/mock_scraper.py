@@ -11,7 +11,7 @@ from fipe_business.domain.entities import Listing
 class MockOLXScraper:
     """Mock scraper that returns fake listings."""
 
-    # Base URL to match OLXScraper interface
+
     BASE_URL = "https://rj.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios"
 
     def __init__(self):
@@ -32,24 +32,24 @@ class MockOLXScraper:
         Returns:
             List of fake listings
         """
-        # Extract search query from BASE_URL if it exists
+
         search_terms = []
         if hasattr(self, 'BASE_URL') and '?q=' in self.BASE_URL:
             query = self.BASE_URL.split('?q=')[1]
             search_terms = query.replace('+', ' ').split()
 
-        # Determine brand/model from search terms
+
         brand = search_terms[0] if len(search_terms) > 0 else "Toyota"
         model = search_terms[1] if len(search_terms) > 1 else "Corolla"
         year = int(search_terms[2]) if len(search_terms) > 2 and search_terms[2].isdigit() else 2000
 
-        # Generate fake listings
+
         fake_listings = [
             Listing(
                 brand=brand,
                 model=model,
                 year=year,
-                price=45000.00,  # Below FIPE to create opportunity
+                price=45000.00,
                 mileage=50000,
                 condition="good",
                 url=f"https://rj.olx.com.br/fake-listing-1-{brand}-{model}-{year}",

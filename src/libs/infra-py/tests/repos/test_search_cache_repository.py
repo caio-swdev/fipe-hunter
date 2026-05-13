@@ -15,10 +15,6 @@ from fipe_infra.database.models import Base
 from fipe_infra.repos.search_cache_repository import SearchCacheRepository
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 @pytest.fixture
 def db_session() -> Session:
     """In-memory SQLite session for each test."""
@@ -40,10 +36,6 @@ _SAMPLE_RESULTS = [
 ]
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-
 def test_get_returns_none_on_miss(repo):
     """Empty DB → get returns None."""
     assert repo.get("Honda", "Civic", 2020) is None
@@ -62,14 +54,14 @@ def test_get_returns_none_after_expiry(repo):
     """Expired entry is deleted and None is returned."""
     repo.set("Honda", "Civic", 2020, _SAMPLE_RESULTS)
 
-    future = datetime.utcnow() + timedelta(hours=3)  # TTL is 2h; advance past it
+    future = datetime.utcnow() + timedelta(hours=3)
     with patch("fipe_infra.repos.search_cache_repository.datetime") as mock_dt:
         mock_dt.utcnow.return_value = future
         result = repo.get("Honda", "Civic", 2020)
 
     assert result is None
 
-    # Row must be deleted from the database
+
     from fipe_infra.database.models import SearchCacheModel
     row = repo.session.query(SearchCacheModel).first()
     assert row is None

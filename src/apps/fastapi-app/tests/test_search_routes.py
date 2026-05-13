@@ -27,7 +27,6 @@ from fipe_infra.database.session import get_db_session
 from fipe_business.domain.value_objects import Price
 
 
-# Test database setup
 @pytest.fixture(scope="module")
 def test_db():
     """Create test database."""
@@ -442,8 +441,8 @@ class TestSearchVehicleAPI:
                 assert response.status_code == 200
                 data = response.json()
 
-                # All 3 listings match brand/model/year, so all create opportunities
+
                 assert data["total_results"] == 3
-                # Verify all have discount info
+
                 for opp in data["results"]:
                     assert opp["discount_percent"] >= 0

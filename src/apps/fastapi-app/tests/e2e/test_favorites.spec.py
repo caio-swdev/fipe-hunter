@@ -30,8 +30,7 @@ from playwright.sync_api import Page, expect
 BASE_URL = "http://localhost:3001/opportunities"
 FAVORITES_URL = "http://localhost:3001/favorites"
 
-# Glob pattern that matches POST/DELETE /api/favorites/{id}
-# but NOT GET /api/favorites (no trailing slash / id segment)
+
 _FAV_GLOB = "**/api/favorites/**"
 
 
@@ -39,7 +38,6 @@ _FAV_GLOB = "**/api/favorites/**"
 class TestFavoritesE2E:
     """E2E tests for the favorites/heart feature."""
 
-    # ── Shared helpers (same pattern as TestOpportunitiesSearchE2E) ──────────
 
     def _select_combobox_option(self, page: Page, button_name: str, filter_text: str):
         """Open a ModelPicker combobox, filter, then JS-click the first matching option."""
@@ -69,31 +67,28 @@ class TestFavoritesE2E:
         page.set_viewport_size({"width": 1920, "height": 1080})
         page.goto(BASE_URL)
 
-        # Brand
+
         page.get_by_role("option", name="M Mitsubishi").click()
         page.wait_for_selector("text=Carregando modelos...", state="hidden", timeout=15000)
 
-        # Model
+
         self._select_combobox_option(page, "Modelo", "OUTLANDER")
 
-        # Year
+
         page.get_by_role("button", name="2016").click()
         page.wait_for_selector("text=Versão (buscando...)", state="hidden", timeout=15000)
 
-        # Version — full label is "3.0/ GT 3.0 V6 Aut.", match by substring
+
         self._select_combobox_option_by_text(page, "Versão", "GT 3.0 V6")
 
-        # Search
+
         page.get_by_role("button", name="Buscar").click()
         expect(page.get_by_text("Buscando...")).to_be_visible(timeout=5000)
 
-        # Wait for FIPE card — ensures the FIPE lookup succeeded, which means
-        # listings use md5(url) IDs and are persisted to the opportunities table.
-        # Without FIPE, listings get random UUIDs that are NOT saved to the DB,
-        # and the favorites feature cannot retrieve them.
+
         expect(page.get_by_text("Referência FIPE")).to_be_visible(timeout=30000)
 
-        # Wait for results list to populate
+
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=10000)
 
     def _get_heart_svg_fill(self, page: Page) -> str:
@@ -127,8 +122,8 @@ class TestFavoritesE2E:
         """
         with page.expect_response(_FAV_GLOB, timeout=10000) as fav_resp:
             page.locator('button[title="Adicionar aos favoritos"]').first.click()
-        # Exiting the `with` block blocks until the response is received.
-        _ = fav_resp.value  # noqa: F841 — access to ensure it resolved
+
+        _ = fav_resp.value
 
     def _wait_for_favorites_page_loaded(self, page: Page) -> None:
         """
@@ -142,7 +137,6 @@ class TestFavoritesE2E:
             timeout=15000,
         )
 
-    # ── Scenarios ────────────────────────────────────────────────────────────
 
     def test_heart_fills_on_click(self, page: Page):
         """
@@ -155,13 +149,13 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Precondition: heart is unfilled
+
         initial_fill = self._get_heart_svg_fill(page)
         assert initial_fill == "transparent", (
             f"Expected initial fill to be 'transparent', got '{initial_fill}'"
         )
 
-        # Click and capture the network response via glob (not lambda — see docstring)
+
         with page.expect_response(_FAV_GLOB, timeout=10000) as resp_info:
             page.locator('button[title="Adicionar aos favoritos"]').first.click()
 
@@ -173,7 +167,7 @@ class TestFavoritesE2E:
             f"Expected POST, got {resp.request.method}"
         )
 
-        # Allow optimistic/actual update to settle
+
         page.wait_for_timeout(300)
 
         filled_fill = self._get_heart_svg_fill(page)
@@ -192,7 +186,7 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # First, heart the listing and wait for POST
+
         self._heart_and_wait(page)
         page.wait_for_timeout(300)
 
@@ -200,7 +194,7 @@ class TestFavoritesE2E:
             "Pre-condition failed: heart should be filled before un-hearting"
         )
 
-        # Un-heart and capture the DELETE response
+
         with page.expect_response(_FAV_GLOB, timeout=10000) as resp_info:
             page.locator('button[title="Remover dos favoritos"]').first.click()
 
@@ -234,20 +228,19 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Heart and wait for server confirmation before navigating
+
         self._heart_and_wait(page)
 
-        # First visit to /favorites — confirms server persistence (POST reached DB)
+
         page.goto(FAVORITES_URL)
         self._wait_for_favorites_page_loaded(page)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
 
-        # Navigate away to /opportunities (the "away" part)
+
         page.goto(BASE_URL)
         page.wait_for_load_state("load")
 
-        # Navigate back to /favorites — item must still be there
-        # (session cookie preserved across navigations; GET /api/favorites re-hydrates)
+
         page.goto(FAVORITES_URL)
         self._wait_for_favorites_page_loaded(page)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
@@ -274,24 +267,19 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Heart and wait for server confirmation
+
         self._heart_and_wait(page)
 
-        # Navigate to /favorites and confirm the item is there before reloading
+
         page.goto(FAVORITES_URL)
         self._wait_for_favorites_page_loaded(page)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
 
-        # Hard-reload /favorites — clears Zustand state; session cookie is preserved.
-        # Use "load" instead of "networkidle": Vite HMR keeps a WebSocket open
-        # after reload, preventing networkidle from being reached.
+
         page.reload()
         page.wait_for_load_state("load", timeout=10000)
 
-        # After reload, GET /api/favorites is called again (Layout remounts).
-        # If the listing was saved with id=md5(url), it will be found in the DB
-        # and the item will reappear.  If it used uuid4() (pre-fix), it would
-        # not be in the DB and the favorites page would be empty.
+
         self._wait_for_favorites_page_loaded(page)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
 
@@ -305,18 +293,16 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Heart and wait for POST to complete before navigating.
-        # Without this, navigation can race the SQLite write and the
-        # GET /api/favorites finds no saved opportunities.
+
         self._heart_and_wait(page)
 
-        # Navigate to favorites
+
         page.goto(FAVORITES_URL)
 
-        # Wait for the page to finish loading (not networkidle — Vite WS interferes)
+
         self._wait_for_favorites_page_loaded(page)
 
-        # At least one "Ver Anúncio" card should be visible
+
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
 
     def test_unheart_from_favorites_removes_card(self, page: Page):
@@ -330,23 +316,23 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Heart and wait for POST to complete before navigating
+
         self._heart_and_wait(page)
 
-        # Navigate to favorites and confirm 1 item is shown
+
         page.goto(FAVORITES_URL)
         self._wait_for_favorites_page_loaded(page)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=5000)
 
-        # Un-heart from the favorites page; wait for DELETE + re-fetch
+
         with page.expect_response(_FAV_GLOB, timeout=10000) as del_resp:
             page.locator('button[title="Remover dos favoritos"]').first.click()
-        _ = del_resp.value  # noqa: F841
+        _ = del_resp.value
 
-        # Card should disappear (react-query re-fetches favorites after onSettled)
+
         expect(page.get_by_text("Ver Anúncio").first).not_to_be_visible(timeout=10000)
 
-        # Empty-state message should appear
+
         expect(page.get_by_text("Nenhum favorito ainda")).to_be_visible(timeout=5000)
 
     def test_heart_active_after_reload_on_opportunities_page(self, page: Page):
@@ -368,23 +354,18 @@ class TestFavoritesE2E:
         """
         self._do_search(page)
 
-        # Heart and wait for server confirmation
+
         self._heart_and_wait(page)
 
-        # Hard-reload — URL params are preserved; Zustand state is cleared.
-        # The Opportunities page useEffect will auto-trigger the search on mount.
-        # Use "load" instead of "networkidle": Vite HMR keeps a WebSocket open.
+
         page.reload()
         page.wait_for_load_state("load", timeout=10000)
 
-        # Wait for the auto-triggered search to complete.
-        # (No manual form interaction needed — URL params drive the search.)
-        # GET /api/favorites completes well before the OLX/WebMotors scrape,
-        # so the store is hydrated by the time results are rendered.
+
         expect(page.get_by_text("Referência FIPE")).to_be_visible(timeout=30000)
         expect(page.get_by_text("Ver Anúncio").first).to_be_visible(timeout=10000)
 
-        # Heart must still be active — same listing URL → same md5 → same ID in store
+
         expect(
             page.locator('button[title="Remover dos favoritos"]').first
         ).to_be_visible(timeout=8000)

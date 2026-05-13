@@ -49,10 +49,10 @@ def sample_alert() -> Alert:
 
 def test_save_alert(repository: SQLAlchemyAlertRepository, sample_alert: Alert):
     """Test saving an alert to database."""
-    # Act
+
     repository.save(sample_alert)
 
-    # Assert
+
     result = repository.find_by_id(sample_alert.alert_id)
     assert result is not None
     assert result.alert_id == sample_alert.alert_id
@@ -62,16 +62,16 @@ def test_save_alert(repository: SQLAlchemyAlertRepository, sample_alert: Alert):
 
 def test_find_by_id_returns_none_when_not_found(repository: SQLAlchemyAlertRepository):
     """Test finding a non-existent alert returns None."""
-    # Act
+
     result = repository.find_by_id("nonexistent-id")
 
-    # Assert
+
     assert result is None
 
 
 def test_find_pending_alerts(repository: SQLAlchemyAlertRepository):
     """Test finding pending alerts."""
-    # Arrange
+
     alert1 = Alert(
         alert_id="alert-1",
         opportunity_id="opp-1",
@@ -118,22 +118,22 @@ def test_find_pending_alerts(repository: SQLAlchemyAlertRepository):
     repository.save(alert2)
     repository.save(alert3)
 
-    # Act
+
     results = repository.find_pending(limit=10)
 
-    # Assert
+
     assert len(results) == 2
     assert all(r.status == "pending" for r in results)
 
 
 def test_find_by_opportunity_id(repository: SQLAlchemyAlertRepository, sample_alert: Alert):
     """Test finding alerts by opportunity ID."""
-    # Arrange
+
     repository.save(sample_alert)
 
     another_alert = Alert(
         alert_id="alert-456",
-        opportunity_id=sample_alert.opportunity_id,  # Same opportunity
+        opportunity_id=sample_alert.opportunity_id,
         recipient_id="user-2",
         channel="email",
         message="Another alert for the same car!",
@@ -146,22 +146,22 @@ def test_find_by_opportunity_id(repository: SQLAlchemyAlertRepository, sample_al
     )
     repository.save(another_alert)
 
-    # Act
+
     results = repository.find_by_opportunity_id(sample_alert.opportunity_id)
 
-    # Assert
+
     assert len(results) == 2
 
 
 def test_update_status(repository: SQLAlchemyAlertRepository, sample_alert: Alert):
     """Test updating alert status."""
-    # Arrange
+
     repository.save(sample_alert)
 
-    # Act
+
     repository.update_status(sample_alert.alert_id, "sent")
 
-    # Assert
+
     result = repository.find_by_id(sample_alert.alert_id)
     assert result is not None
     assert result.status == "sent"
@@ -169,7 +169,7 @@ def test_update_status(repository: SQLAlchemyAlertRepository, sample_alert: Aler
 
 def test_count_by_status(repository: SQLAlchemyAlertRepository, sample_alert: Alert):
     """Test counting alerts by status."""
-    # Arrange
+
     repository.save(sample_alert)
 
     sent_alert = Alert(
@@ -187,10 +187,10 @@ def test_count_by_status(repository: SQLAlchemyAlertRepository, sample_alert: Al
     )
     repository.save(sent_alert)
 
-    # Act
+
     pending_count = repository.count_by_status("pending")
     sent_count = repository.count_by_status("sent")
 
-    # Assert
+
     assert pending_count == 1
     assert sent_count == 1

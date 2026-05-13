@@ -33,7 +33,7 @@ class ComparePricesUseCase:
                 status: "opportunity" | "suspicious" | "below_threshold" | "overpriced"
         """
         if fipe_price is None:
-            # Cannot compare without FIPE reference price
+
             return None
 
         discount, status = PriceComparisonService.compare_prices(

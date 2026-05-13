@@ -3,6 +3,7 @@ Use Case: Process New Listings
 
 End-to-end opportunity pipeline: FIPE lookup → price comparison → scoring → create opportunity.
 """
+import logging
 from typing import Dict, Callable
 from fipe_business.domain.entities import Listing
 from fipe_business.application.ports import IListingRepository
@@ -13,6 +14,8 @@ from fipe_business.application.use_cases import (
     CreateOpportunityUseCase
 )
 from fipe_business.domain.value_objects import Price
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessNewListingsUseCase:
@@ -86,10 +89,10 @@ class ProcessNewListingsUseCase:
             try:
                 stats["processed"] += 1
 
-                # Generate listing ID
+
                 listing_id = listing_id_generator(listing)
 
-                # Step 1: Lookup FIPE price
+
                 fipe_result = await self.lookup_fipe_price.execute(
                     brand=listing.brand,
                     model=listing.model,
@@ -97,14 +100,14 @@ class ProcessNewListingsUseCase:
                 )
 
                 if fipe_result is None:
-                    # No FIPE price found - skip this listing
+
                     stats["no_fipe_price"] += 1
-                    print(f"No FIPE price found for {listing.brand} {listing.model} {listing.year}")
+                    logger.warning("No FIPE price found for %s %s %s", listing.brand, listing.model, listing.year)
                     continue
 
                 fipe_price = Price.from_float(fipe_result["price"])
 
-                # Step 2: Compare prices
+
                 listing_price = Price.from_float(listing.price)
                 comparison_result = self.compare_prices.execute(
                     listing_price=listing_price,
@@ -112,23 +115,23 @@ class ProcessNewListingsUseCase:
                 )
 
                 if comparison_result is None:
-                    # Cannot compare - skip
+
                     stats["errors"] += 1
                     continue
 
                 discount, status = comparison_result
 
-                # Check status
+
                 if status == "below_threshold":
-                    # Not a good enough deal
+
                     stats["below_threshold"] += 1
                     continue
                 elif status == "overpriced":
-                    # Listing is more expensive than FIPE
+
                     stats["below_threshold"] += 1
                     continue
 
-                # Step 3: Calculate opportunity score
+
                 score = self.calculate_score.execute(
                     discount=discount,
                     condition=listing.condition,
@@ -138,7 +141,7 @@ class ProcessNewListingsUseCase:
                     created_at=listing.scraped_at
                 )
 
-                # Step 4: Create opportunity
+
                 opportunity_status = "suspicious" if status == "suspicious" else "active"
 
                 opportunity = self.create_opportunity.execute(
@@ -150,17 +153,17 @@ class ProcessNewListingsUseCase:
                     status=opportunity_status
                 )
 
-                # Track statistics
+
                 if opportunity_status == "suspicious":
                     stats["suspicious"] += 1
                 else:
                     stats["opportunities_created"] += 1
 
-                print(f"Created opportunity: {listing.brand} {listing.model} {listing.year} - Score: {score.value}")
+                logger.info("Created opportunity: %s %s %s - Score: %s", listing.brand, listing.model, listing.year, score.value)
 
             except Exception as e:
-                # Error processing this listing - log and continue
-                print(f"Error processing listing {listing.url}: {e}")
+
+                logger.error("Error processing listing %s: %s", listing.url, e)
                 stats["errors"] += 1
                 continue
 

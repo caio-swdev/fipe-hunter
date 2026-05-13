@@ -47,10 +47,10 @@ def sample_listing() -> Listing:
 
 def test_save_listing(repository: SQLAlchemyListingRepository, sample_listing: Listing):
     """Test saving a listing to database."""
-    # Act
+
     repository.save(sample_listing)
 
-    # Assert
+
     result = repository.find_by_url(sample_listing.url)
     assert result is not None
     assert result.brand == sample_listing.brand
@@ -61,22 +61,22 @@ def test_save_listing(repository: SQLAlchemyListingRepository, sample_listing: L
 
 def test_find_by_url_returns_none_when_not_found(repository: SQLAlchemyListingRepository):
     """Test finding a non-existent listing returns None."""
-    # Act
+
     result = repository.find_by_url("https://nonexistent.com")
 
-    # Assert
+
     assert result is None
 
 
 def test_find_by_url_returns_listing(repository: SQLAlchemyListingRepository, sample_listing: Listing):
     """Test finding existing listing by URL."""
-    # Arrange
+
     repository.save(sample_listing)
 
-    # Act
+
     result = repository.find_by_url(sample_listing.url)
 
-    # Assert
+
     assert result is not None
     assert result.brand == sample_listing.brand
     assert result.url == sample_listing.url
@@ -84,7 +84,7 @@ def test_find_by_url_returns_listing(repository: SQLAlchemyListingRepository, sa
 
 def test_count_by_marketplace(repository: SQLAlchemyListingRepository, sample_listing: Listing):
     """Test counting listings by marketplace."""
-    # Arrange
+
     repository.save(sample_listing)
 
     webmotors_listing = Listing(
@@ -100,11 +100,11 @@ def test_count_by_marketplace(repository: SQLAlchemyListingRepository, sample_li
     )
     repository.save(webmotors_listing)
 
-    # Act
+
     olx_count = repository.count_by_marketplace("olx")
     webmotors_count = repository.count_by_marketplace("webmotors")
 
-    # Assert
+
     assert olx_count == 1
     assert webmotors_count == 1
 
@@ -114,7 +114,7 @@ def test_save_duplicate_url_raises_integrity_error(
     sample_listing: Listing
 ):
     """Test that saving duplicate URL raises error."""
-    # Arrange
+
     repository.save(sample_listing)
 
     duplicate = Listing(
@@ -124,11 +124,11 @@ def test_save_duplicate_url_raises_integrity_error(
         price=35000.0,
         mileage=30000,
         condition="excellent",
-        url=sample_listing.url,  # Same URL
+        url=sample_listing.url,
         marketplace="olx",
         scraped_at=datetime(2024, 1, 3, 12, 0, 0)
     )
 
-    # Act & Assert
-    with pytest.raises(Exception):  # SQLAlchemy IntegrityError
+
+    with pytest.raises(Exception):
         repository.save(duplicate)

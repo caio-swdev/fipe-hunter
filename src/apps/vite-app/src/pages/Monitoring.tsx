@@ -104,7 +104,7 @@ export function Monitoring() {
   const apiHits = data?.api_hits
   const cacheStats = data?.cache_stats
 
-  // Merge per-service hourly series into [{hour, fipe, olx, webmotors}]
+  
   const hitSeries = (() => {
     const fipeSeries = apiHits?.fipe.series ?? []
     const olxSeries = apiHits?.olx.series ?? []
@@ -115,7 +115,7 @@ export function Monitoring() {
     wmSeries.forEach(({ hour, count }) => { byHour[hour] = { ...(byHour[hour] ?? { fipe: 0, olx: 0, webmotors: 0 }), webmotors: count } })
     return Object.entries(byHour)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([hour, counts]) => ({ hour: hour.slice(11, 16), ...counts })) // "HH:00"
+      .map(([hour, counts]) => ({ hour: hour.slice(11, 16), ...counts })) 
   })()
 
   const serviceLabel = (s: ServiceHealth | undefined) =>
@@ -153,7 +153,7 @@ export function Monitoring() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(20rem, 1fr))', gap: '1.5rem' }}>
-        {/* Card 1 — API Health */}
+        {}
         <Card title="Saúde das APIs">
           {(['fipe', 'olx', 'webmotors'] as const).map((key) => {
             const s = svc?.[key]
@@ -187,13 +187,13 @@ export function Monitoring() {
           })}
         </Card>
 
-        {/* Card 2 — Scraping Activity */}
+        {}
         <Card title="Atividade de Coleta">
           <Row label="Oportunidades hoje" value={fmt(scraping?.opportunities_today?.toString())} />
           <Row label="Anúncios coletados hoje" value={fmt(scraping?.listings_today?.toString())} />
         </Card>
 
-        {/* Card 2b — Price Cache */}
+        {}
         <Card title="Cache Preços FIPE">
           <Row label="Entradas ativas" value={fmt(cache?.active?.toString())} />
           <Row label="Expiradas" value={fmt(cache?.expired?.toString())} />
@@ -201,7 +201,7 @@ export function Monitoring() {
           <Row label="TTL" value="Mensal (ref. FIPE)" />
         </Card>
 
-        {/* Card 2c — Search Cache */}
+        {}
         <Card title="Cache Buscas (OLX/WebMotors)">
           <Row label="Entradas ativas" value={fmt(searchCache?.active?.toString())} />
           <Row label="Expiradas" value={fmt(searchCache?.expired?.toString())} />
@@ -209,14 +209,14 @@ export function Monitoring() {
           <Row label="TTL" value="Fixo 2h" />
         </Card>
 
-        {/* Card 3 — Message Queue */}
+        {}
         <Card title="Fila de Mensagens">
           <Row label="Pendentes" value={fmt(alerts?.pending?.toString())} />
           <Row label="Falharam" value={fmt(alerts?.failed?.toString())} />
           <Row label="Enviadas hoje" value={fmt(alerts?.sent_today?.toString())} />
         </Card>
 
-        {/* Card 5 — Catalog Cache (MMY adaptive TTL) */}
+        {}
         <Card title="Cache Catálogo MMY">
           <Row label="Entradas ativas" value={fmt(catalogCache?.active?.toString())} />
           <Row label="Expiradas" value={fmt(catalogCache?.expired?.toString())} />
@@ -239,7 +239,7 @@ export function Monitoring() {
         </Card>
       </div>
 
-      {/* API Hits — time series chart */}
+      {}
       <div
         style={{
           background: 'rgba(255,255,255,0.04)',

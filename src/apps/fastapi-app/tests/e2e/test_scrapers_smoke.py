@@ -21,7 +21,7 @@ import pytest
 
 logger = logging.getLogger(__name__)
 
-# Popular vehicle guaranteed to have many listings on OLX RJ
+
 _SMOKE_BRAND = "Honda"
 _SMOKE_MODEL = "HRV"
 _SMOKE_YEAR = 2020
@@ -62,7 +62,7 @@ class TestWebMotorsScraper:
     """Smoke test: WebMotors returns at least 1 listing for a common vehicle."""
 
     def test_returns_listings(self):
-        # Skip automatically if Chrome is not installed (e.g. Render free tier)
+
         if not shutil.which("google-chrome") and not shutil.which("chromium") and not shutil.which("chromium-browser"):
             pytest.skip("Chrome/Chromium not installed — WebMotors scraper requires headless Chrome")
 

@@ -31,24 +31,24 @@ class OpportunityController:
             Response dictionary with opportunities array
         """
         try:
-            # Get active opportunities (min_score=0 to get all)
+
             opportunities = self.repository.find_active(min_score=0, limit=1000)
 
-            # Sort by score descending
+
             sorted_opps = sorted(
                 opportunities,
                 key=lambda o: o.score.value if hasattr(o, 'score') else o.score_value if hasattr(o, 'score_value') else 0,
                 reverse=True
             )
 
-            # Apply pagination
+
             paginated = sorted_opps[offset:offset + limit]
 
-            # Convert to response format
+
             data = []
             for opp in paginated:
                 data.append({
-                    "id": opp.listing_id,  # Use listing_id as unique identifier for frontend
+                    "id": opp.listing_id,
                     "listing_id": opp.listing_id,
                     "brand": opp.brand,
                     "model": opp.model,

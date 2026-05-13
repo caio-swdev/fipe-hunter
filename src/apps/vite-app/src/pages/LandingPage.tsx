@@ -1,15 +1,9 @@
-/**
- * FIPE Hunter — Landing Page
- * Style: Finpay-inspired light/white, split hero, teal accent, professional B2B
- * Template base: minimal-light + custom split-hero
- * Stack: React 18 + Tailwind CSS + React Router v6
- */
+
 
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-// ─── Animation variants ────────────────────────────────────────────────────────
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -21,7 +15,6 @@ const stagger = {
   show: { transition: { staggerChildren: 0.1 } },
 };
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
 
 interface Feature {
   icon: string;
@@ -42,12 +35,11 @@ interface Stat {
   label: string;
 }
 
-// ─── DATA ──────────────────────────────────────────────────────────────────────
 
 const PRODUCT_NAME = "FIPE Hunter";
 const TAGLINE = "Tabela FIPE oficial · Score 0–100";
 
-// Hero
+
 const HERO_HEADLINE_MAIN = "Encontre carros abaixo do preço";
 const HERO_HEADLINE_ACCENT = "antes que sumam.";
 const HERO_SUBHEADLINE =
@@ -57,7 +49,7 @@ const CTA_SUBTITLE = "Demo pública · sem cadastro.";
 const SECONDARY_CTA_LABEL = "Como funciona";
 const CTA_TO = "/app/opportunities";
 
-// Features
+
 const FEATURES_HEADING = "Busca inteligente que trabalha por você";
 const FEATURES_SUBHEADING =
   "Pipeline de três estágios — do scraper ao score — sem intervenção manual.";
@@ -82,14 +74,14 @@ const FEATURES: Feature[] = [
   },
 ];
 
-// Stats
+
 const STATS: Stat[] = [
   { target: 30,  prefix: "< ", suffix: "s", label: "Tempo médio de busca" },
   { target: 100, prefix: "0–",              label: "Score de desconto por veículo" },
   { target: 1,   suffix: "+",               label: "Portal monitorado em produção" },
 ];
 
-// Steps
+
 const STEPS: Step[] = [
   {
     n: "1",
@@ -108,14 +100,13 @@ const STEPS: Step[] = [
   },
 ];
 
-// Bottom CTA
+
 const BOTTOM_CTA_HEADING = "Pronto para encontrar seu próximo carro?";
 const BOTTOM_CTA_COPY = "Demo em produção, sem instalação, sem cadastro.";
 
-// Footer
+
 const FOOTER_NOTE = "Demo · fipe-hunter-api.onrender.com";
 
-// ─── Navbar ────────────────────────────────────────────────────────────────────
 
 function Navbar() {
   return (
@@ -145,19 +136,18 @@ function Navbar() {
   );
 }
 
-// ─── OpportunityMockup (hero right side) ──────────────────────────────────────
 
 function OpportunityMockup() {
   return (
     <div className="relative w-full max-w-sm mx-auto lg:mx-0">
-      {/* Floating badge */}
+      {}
       <div className="absolute -top-3 -right-3 z-10 bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-2xl shadow-lg">
         🔥 Oportunidade
       </div>
 
-      {/* Main card */}
+      {}
       <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-7 space-y-5">
-        {/* Header row */}
+        {}
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
             São Paulo
@@ -168,7 +158,7 @@ function OpportunityMockup() {
           </div>
         </div>
 
-        {/* Vehicle + price */}
+        {}
         <div>
           <p className="text-sm text-gray-400 font-medium">Honda Civic EXL 2019</p>
           <p className="text-4xl font-extrabold text-gray-900 mt-1 tracking-tight">
@@ -180,7 +170,7 @@ function OpportunityMockup() {
           </p>
         </div>
 
-        {/* Discount + savings */}
+        {}
         <div className="flex gap-3">
           <div className="flex-1 bg-teal-50 rounded-2xl p-4 text-center">
             <p className="text-2xl font-extrabold text-teal-600 leading-none">
@@ -196,7 +186,7 @@ function OpportunityMockup() {
           </div>
         </div>
 
-        {/* CTA button */}
+        {}
         <button
           className="w-full bg-teal-500 hover:bg-teal-600 text-white rounded-2xl py-3.5 text-sm font-semibold transition-colors"
           type="button"
@@ -205,7 +195,7 @@ function OpportunityMockup() {
         </button>
       </div>
 
-      {/* Decorative background blob */}
+      {}
       <div
         className="absolute -z-10 inset-0 translate-x-4 translate-y-4 rounded-3xl bg-teal-100 opacity-50"
         aria-hidden="true"
@@ -214,7 +204,6 @@ function OpportunityMockup() {
   );
 }
 
-// ─── Hero ──────────────────────────────────────────────────────────────────────
 
 function Hero() {
   return (
@@ -223,7 +212,7 @@ function Hero() {
       aria-label="Hero"
     >
       <div className="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center py-20">
-        {/* Left — copy */}
+        {}
         <motion.div
           className="space-y-8"
           initial="hidden"
@@ -263,7 +252,7 @@ function Hero() {
           <motion.p variants={fadeUp} className="text-sm text-gray-400">{CTA_SUBTITLE}</motion.p>
         </motion.div>
 
-        {/* Right — mockup card */}
+        {}
         <motion.div
           className="flex justify-center lg:justify-end"
           initial={{ opacity: 0, x: 40, scale: 0.95 }}
@@ -277,7 +266,6 @@ function Hero() {
   );
 }
 
-// ─── Features ─────────────────────────────────────────────────────────────────
 
 function Features() {
   return (
@@ -327,7 +315,6 @@ function Features() {
   );
 }
 
-// ─── useCountUp ────────────────────────────────────────────────────────────────
 
 function useCountUp(target: number, duration = 1500) {
   const [count, setCount] = useState(0);
@@ -360,7 +347,6 @@ function useCountUp(target: number, duration = 1500) {
   return { count, ref };
 }
 
-// ─── Stats ─────────────────────────────────────────────────────────────────────
 
 function StatCard({ stat }: { stat: Stat }) {
   const { count, ref } = useCountUp(stat.target);
@@ -395,7 +381,6 @@ function Stats() {
   );
 }
 
-// ─── Steps ─────────────────────────────────────────────────────────────────────
 
 function Steps() {
   return (
@@ -435,7 +420,6 @@ function Steps() {
   );
 }
 
-// ─── CallToAction ──────────────────────────────────────────────────────────────
 
 function CallToAction() {
   return (
@@ -480,7 +464,6 @@ function CallToAction() {
   );
 }
 
-// ─── Footer ────────────────────────────────────────────────────────────────────
 
 function Footer() {
   return (
@@ -496,7 +479,6 @@ function Footer() {
   );
 }
 
-// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   return (

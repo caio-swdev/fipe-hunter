@@ -20,13 +20,12 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Module-level catalog cache: fallback when no CatalogCacheRepository is injected.
-# Stores (data, expires_timestamp) tuples keyed by catalog key.
+
 _catalog_cache: dict = {}
 
-_FALLBACK_TTL_SECONDS = 3600  # 1h fallback TTL for in-memory dict
+_FALLBACK_TTL_SECONDS = 3600
 
-# In-memory counters for catalog cache hit rate (resets on restart).
+
 _cache_stats: dict = {"requests": 0, "hits": 0}
 
 
@@ -52,7 +51,7 @@ def _dict_cache_set(key: str, data) -> None:
 class FIPEClient:
     """Async HTTP client for FIPE API."""
 
-    # Brand normalization mapping
+
     BRAND_ALIASES = {
         "vw": "volkswagen",
         "gm": "chevrolet",
@@ -121,7 +120,7 @@ class FIPEClient:
         """
         brand_lower = brand.strip().lower()
 
-        # Check if it's a known alias
+
         if brand_lower in self.BRAND_ALIASES:
             return self.BRAND_ALIASES[brand_lower]
 
@@ -144,12 +143,12 @@ class FIPEClient:
 
         for brand in api_brands:
             api_brand_name = brand.get("nome", "").strip().lower()
-            # Normalize the API brand name too
+
             normalized_api = self._normalize_brand(api_brand_name)
 
             if normalized_api == normalized_search or api_brand_name == normalized_search:
                 return brand
-            # Substring match: "volkswagen" in "vw - volkswagen"
+
             if normalized_search in api_brand_name or api_brand_name in normalized_search:
                 return brand
 
@@ -195,7 +194,7 @@ class FIPEClient:
         for year in api_years:
             year_name = year.get("nome", "").strip()
 
-            # Check if year appears in name (e.g., "2015 Gasolina")
+
             if year_name.startswith(year_str):
                 return year
 
@@ -220,7 +219,7 @@ class FIPEClient:
             Dict with price, fipe_code, reference_month, model_version or None if not found
         """
         try:
-            # Step 1: Get brands
+
             brands = await self._get_brands_with_retry()
             if not brands:
                 return None
@@ -231,7 +230,7 @@ class FIPEClient:
 
             brand_id = matched_brand.get("codigo")
 
-            # Step 2: Get models
+
             models_response = await self._get_models_with_retry(brand_id)
             if not models_response:
                 return None
@@ -241,12 +240,12 @@ class FIPEClient:
             if not matched_models:
                 return None
 
-            # Try each matching model variant until we find one with the right year
+
             for matched_model in matched_models:
                 model_id = matched_model.get("codigo")
                 model_version = matched_model.get("nome")
 
-                # Step 3: Get years
+
                 years = await self._get_years_with_retry(brand_id, model_id)
                 if not years:
                     continue
@@ -257,7 +256,7 @@ class FIPEClient:
 
                 year_code = matched_year.get("codigo")
 
-                # Step 4: Get price
+
                 price_response = await self._get_price_with_retry(brand_id, model_id, year_code)
                 if not price_response:
                     continue
@@ -441,9 +440,7 @@ class FIPEClient:
         base_lower = model_base.strip().lower()
         candidates = [m for m in models if m["name"].lower().startswith(base_lower)]
 
-        # Use asyncio.wait with a hard timeout so we return partial results rather than []
-        # if FIPE API is slow. Semaphore=5 keeps us under FIPE rate limits while being
-        # fast enough for 40+ candidates (e.g. Toyota Corolla has 43 variants).
+
         sem = asyncio.Semaphore(5)
 
         async def check_model(m: dict) -> Optional[dict]:
@@ -526,7 +523,7 @@ class FIPEClient:
     def _get_fallback_date(self) -> str:
         """Get fallback date (current year/month)."""
         now = datetime.now()
-        # Format: "janeiro/2024", "fevereiro/2024", etc.
+
         months = [
             "janeiro", "fevereiro", "março", "abril", "maio", "junho",
             "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"

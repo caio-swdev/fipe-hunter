@@ -19,7 +19,7 @@ import httpx
 
 BASE_URL = os.environ.get("FIPE_HUNTER_URL", "https://fipe-hunter-api.onrender.com").rstrip("/")
 
-# Timeouts: generous because Render free tier cold-starts take ~30s
+
 COLD_START_TIMEOUT = 45
 DEFAULT_TIMEOUT = 20
 SCRAPER_TIMEOUT = 30
@@ -28,12 +28,12 @@ SCRAPER_TIMEOUT = 30
 @pytest.fixture(scope="session")
 def client():
     with httpx.Client(base_url=BASE_URL, timeout=COLD_START_TIMEOUT) as c:
-        # Warm up: hit health once with generous timeout so the Render free-tier cold
-        # start (up to 60s) completes before the timed test assertions run.
+
+
         try:
             c.get("/health", timeout=90)
         except Exception:
-            pass  # timeout or error here is fine — test_health will assert properly
+            pass
         yield c
 
 
@@ -48,20 +48,12 @@ def toyota_brand_id(client):
     return brand_id
 
 
-# ---------------------------------------------------------------------------
-# Health
-# ---------------------------------------------------------------------------
-
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     body = r.json()
     assert body.get("status") == "healthy"
 
-
-# ---------------------------------------------------------------------------
-# FIPE catalog
-# ---------------------------------------------------------------------------
 
 def test_fipe_models_toyota(client):
     r = client.get("/api/v1/fipe/catalog/models", params={"brand_name": "Toyota"})
@@ -87,7 +79,7 @@ def test_fipe_versions_corolla(client, toyota_brand_id):
 
 
 def test_fipe_years_corolla(client, toyota_brand_id):
-    # Get model_id from models list first
+
     r = client.get("/api/v1/fipe/catalog/models", params={"brand_name": "Toyota"})
     models = r.json().get("models", [])
     corolla = next((m for m in models if "Corolla" in m.get("name", "")), None)
@@ -108,11 +100,6 @@ def test_fipe_years_corolla(client, toyota_brand_id):
     assert len(data["years"]) > 0
 
 
-# ---------------------------------------------------------------------------
-# Scrapers (direct test endpoints)
-# ---------------------------------------------------------------------------
-
-
 def test_scraper_olx(client):
     r = client.post(
         "/api/scrape/olx",
@@ -125,14 +112,10 @@ def test_scraper_olx(client):
     assert data.get("total", 0) > 0, "OLX returned 0 results"
 
 
-# ---------------------------------------------------------------------------
-# Dashboard
-# ---------------------------------------------------------------------------
-
 def test_dashboard_summary(client):
     r = client.get("/api/dashboard/summary", timeout=DEFAULT_TIMEOUT)
     assert r.status_code == 200
     data = r.json()
-    # Response shape: {"status": "success", "data": {"total_opportunities": ...}}
+
     assert data.get("status") == "success"
     assert "total_opportunities" in data.get("data", {})

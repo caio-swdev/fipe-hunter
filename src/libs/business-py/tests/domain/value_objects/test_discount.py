@@ -33,9 +33,9 @@ def test_discount_calculation_negative():
 
     discount = Discount.calculate(listing_price, fipe_price)
 
-    # Discount percentage should be negative (listing is overpriced)
+
     assert discount.percentage < 0
-    # Discount amount should also be negative
+
     assert discount.amount.amount < 0
 
 
@@ -60,7 +60,7 @@ def test_discount_is_suspicious():
 
 def test_discount_is_in_range():
     """Test if discount is in valid range."""
-    listing_price = Price.from_float(18750.0)  # 25% discount
+    listing_price = Price.from_float(18750.0)
     fipe_price = Price.from_float(25000.0)
     discount = Discount.calculate(listing_price, fipe_price)
 
@@ -85,5 +85,5 @@ def test_discount_high_precision():
     fipe_price = Price.from_float(25000.0)
     discount = Discount.calculate(listing_price, fipe_price)
 
-    # Should be 20.004% rounded to 20.00%
+
     assert discount.percentage == Decimal('20.00')

@@ -21,8 +21,7 @@ FIPE Hunter scrapes car listings from WebMotors, compares each price against the
 | Frontend | React, TypeScript, Vite |
 | Backend | FastAPI, Python |
 | Database | Neon (PostgreSQL) |
-| Scraping | BeautifulSoup, nodriver (headless Chromium) |
-| Scheduling | APScheduler |
+| Scraping | Playwright, playwright-stealth (headless Chromium) |
 | Deployment | Render (Docker multi-stage, single service) |
 
 ## Key Technical Decisions

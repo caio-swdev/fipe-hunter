@@ -31,13 +31,13 @@ class SQLAlchemyCacheRepository:
         Args:
             cache_entry: PriceCache entity to save.
         """
-        # Query for existing entry
+
         existing = self.session.query(PriceCacheModel).filter_by(
             cache_key=cache_entry.cache_key
         ).first()
 
         if existing:
-            # Update existing entry
+
             existing.brand = cache_entry.brand
             existing.model = cache_entry.model
             existing.year = cache_entry.year
@@ -47,7 +47,7 @@ class SQLAlchemyCacheRepository:
             existing.cached_at = cache_entry.cached_at
             existing.expires_at = cache_entry.expires_at
         else:
-            # Create new entry
+
             model = PriceCacheModel(
                 cache_key=cache_entry.cache_key,
                 brand=cache_entry.brand,
@@ -79,7 +79,7 @@ class SQLAlchemyCacheRepository:
         if not model:
             return None
 
-        # Reconstruct PriceCache entity from model
+
         return PriceCache(
             cache_key=model.cache_key,
             brand=model.brand,

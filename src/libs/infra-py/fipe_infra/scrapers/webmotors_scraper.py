@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-# JavaScript to extract car listing data from WebMotors DOM
 _JS_EXTRACT_CARS = """
 JSON.stringify(
     Array.from(document.querySelectorAll('a[href*="/comprar/"]'))
@@ -150,7 +149,7 @@ class WebMotorsScraper:
                 logger.info("[WebMotors] Fetching: %s", url)
                 await page.goto(url, timeout=25000)
 
-                # Wait for car cards or timeout — avoids fixed 12s sleep
+
                 try:
                     await page.wait_for_selector('[class*="Card"]', timeout=10000)
                 except Exception:

@@ -9,18 +9,17 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 
 
-# Database URL from environment variable
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "sqlite:///./fipe_hunter.db"
 )
 
-# Create engine
+
 engine = create_engine(
     DATABASE_URL,
     connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {},
 )
 
-# Session factory
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

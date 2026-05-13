@@ -28,7 +28,7 @@ class CurlOLXScraper:
 
     BASE_URL = "https://www.olx.com.br/autos-e-pecas/carros-vans-e-utilitarios/estado-rj"
 
-    # Browser versions to impersonate (curl_cffi built-in profiles)
+
     IMPERSONATE_PROFILES = [
         "chrome120",
         "chrome119",
@@ -84,13 +84,13 @@ class CurlOLXScraper:
         })
 
         try:
-            # Warm-up: visit OLX homepage first (mimics real user)
+
             olx_limiter.acquire_sync()
             logger.info("[CurlOLX] Warming up with homepage visit...")
             session.get("https://www.olx.com.br/", timeout=15)
             time.sleep(random.uniform(0.5, 1.5))
 
-            # Now search
+
             olx_limiter.acquire_sync()
             url = self._build_url()
             logger.info("[CurlOLX] Fetching: %s", url)
@@ -103,15 +103,15 @@ class CurlOLXScraper:
 
             soup = BeautifulSoup(html, "html.parser")
 
-            # Try multiple selectors (OLX changes these periodically)
+
             cards = soup.find_all("section", class_="olx-adcard")
             if not cards:
                 cards = soup.find_all("li", attrs={"data-ds-component": "DS-AdCard"})
             if not cards:
-                # Fallback: look for ad card links
+
                 cards = soup.find_all("a", attrs={"data-ds-component": "DS-NewAdCard-Link"})
                 if cards:
-                    # Wrap each link in its parent container
+
                     cards = [a.parent for a in cards if a.parent]
 
             logger.info("[CurlOLX] Found %d ad cards", len(cards))
@@ -146,7 +146,7 @@ class CurlOLXScraper:
         return listings
 
     def _parse_card(self, card) -> Listing | None:
-        # Extract link
+
         link_el = card.find("a", attrs={"data-ds-component": "DS-NewAdCard-Link"})
         if not link_el:
             link_el = card.find("a", attrs={"data-testid": "adcard-link"})
@@ -159,7 +159,7 @@ class CurlOLXScraper:
         if not url.startswith("http"):
             url = f"https://www.olx.com.br{url}"
 
-        # Extract title
+
         title_el = card.find("h2")
         if not title_el:
             return None
@@ -169,10 +169,10 @@ class CurlOLXScraper:
 
         brand, model, year = self._parse_title(title)
 
-        # Extract price
+
         price_el = card.find("h3")
         if not price_el:
-            # Try span with aria-label for price
+
             price_el = card.find("span", attrs={"aria-label": re.compile(r"R\$|reais", re.I)})
         if not price_el:
             return None
@@ -182,10 +182,10 @@ class CurlOLXScraper:
         if price <= 0:
             return None
 
-        # Extract image
+
         image_url = self._extract_image(card)
 
-        # Extract mileage
+
         mileage = self._extract_mileage(card)
 
         return Listing(

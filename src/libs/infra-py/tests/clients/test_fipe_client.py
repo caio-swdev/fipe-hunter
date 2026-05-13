@@ -37,10 +37,10 @@ class TestFIPEClientLookupPrice:
     @pytest.mark.asyncio
     async def test_lookup_price_success(self, mock_httpx_client):
         """Should return price and version when vehicle found."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
-        # Mock API responses
+
         mock_brands_response = Mock()
         mock_brands_response.json.return_value = [
             {"codigo": "59", "nome": "VOLKSWAGEN"}
@@ -80,10 +80,10 @@ class TestFIPEClientLookupPrice:
                 mock_price_response
             ])
 
-            # Act
+
             result = await fipe_client.lookup_price("Volkswagen", "Gol", 2015)
 
-        # Assert
+
         assert result is not None
         price = result["price"]
         version = result["model_version"]
@@ -94,7 +94,7 @@ class TestFIPEClientLookupPrice:
     @pytest.mark.asyncio
     async def test_lookup_price_brand_not_found(self, mock_httpx_client):
         """Should return None when brand not found in FIPE."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
         mock_brands_response = Mock()
@@ -106,16 +106,16 @@ class TestFIPEClientLookupPrice:
         with patch.object(fipe_client, '_client') as mock_client:
             mock_client.get = AsyncMock(return_value=mock_brands_response)
 
-            # Act
+
             result = await fipe_client.lookup_price("UnknownBrand", "Model", 2015)
 
-        # Assert
+
         assert result is None
 
     @pytest.mark.asyncio
     async def test_lookup_price_fuzzy_brand_matching(self, mock_httpx_client):
         """Should match brand names with fuzzy logic (VW -> Volkswagen)."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
         mock_brands_response = Mock()
@@ -157,10 +157,10 @@ class TestFIPEClientLookupPrice:
                 mock_price_response
             ])
 
-            # Act - Use "VW" abbreviation
+
             result = await fipe_client.lookup_price("VW", "Gol", 2015)
 
-        # Assert
+
         assert result is not None
         price = result["price"]
         version = result["model_version"]
@@ -169,18 +169,18 @@ class TestFIPEClientLookupPrice:
     @pytest.mark.asyncio
     async def test_lookup_price_timeout(self, mock_httpx_client):
         """Should handle timeout and retry once."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
         with patch.object(fipe_client, '_client') as mock_client:
             mock_client.get = AsyncMock(side_effect=httpx.TimeoutException("Request timeout"))
 
-            # Act
+
             result = await fipe_client.lookup_price("Volkswagen", "Gol", 2015)
 
-        # Assert
+
         assert result is None
-        # Should retry at least once
+
         assert mock_client.get.call_count >= 2
 
 
@@ -190,7 +190,7 @@ class TestFIPEClientGetTableDate:
     @pytest.mark.asyncio
     async def test_get_table_date_success(self, mock_httpx_client):
         """Should return current FIPE table reference date."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
         mock_response = Mock()
@@ -202,26 +202,26 @@ class TestFIPEClientGetTableDate:
         with patch.object(fipe_client, '_client') as mock_client:
             mock_client.get = AsyncMock(return_value=mock_response)
 
-            # Act
+
             result = await fipe_client.get_table_date()
 
-        # Assert
+
         assert result == "janeiro/2024"
 
     @pytest.mark.asyncio
     async def test_get_table_date_fallback(self, mock_httpx_client):
         """Should return fallback date on error."""
-        # Arrange
+
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
         with patch.object(fipe_client, '_client') as mock_client:
             mock_client.get = AsyncMock(side_effect=httpx.RequestError("Network error"))
 
-            # Act
+
             result = await fipe_client.get_table_date()
 
-        # Assert
-        assert "202" in result  # Should contain year
+
+        assert "202" in result
 
 
 class TestBrandNormalization:
@@ -232,7 +232,7 @@ class TestBrandNormalization:
         """Should normalize common brand abbreviations."""
         fipe_client = FIPEClient(base_url="https://parallelum.com.br/fipe/api/v1", timeout=10.0)
 
-        # Test abbreviation mapping
+
         assert fipe_client._normalize_brand("VW") == "volkswagen"
         assert fipe_client._normalize_brand("GM") == "chevrolet"
         assert fipe_client._normalize_brand("Fiat") == "fiat"

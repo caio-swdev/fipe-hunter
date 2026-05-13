@@ -11,7 +11,7 @@ from ..value_objects import Discount, Score, ScoreComponents
 class ScoringService:
     """Service for calculating opportunity scores."""
 
-    # Condition score mapping
+
     CONDITION_SCORES = {
         "excellent": 95,
         "good": 75,
@@ -19,18 +19,18 @@ class ScoringService:
         "poor": 40,
     }
 
-    # Market demand scores (simplified - would come from external data in production)
+
     DEMAND_SCORES = {
-        # High demand vehicles
+
         ("volkswagen", "gol"): 85,
         ("fiat", "uno"): 80,
         ("chevrolet", "onix"): 85,
         ("honda", "civic"): 80,
         ("toyota", "corolla"): 82,
-        # Medium demand
+
         ("ford", "ka"): 70,
         ("renault", "sandero"): 70,
-        # Default for others
+
         "default": 70,
     }
 
@@ -85,7 +85,7 @@ class ScoringService:
         elif discount_pct >= 50:
             return 100
         else:
-            # Linear mapping: 0-50% -> 0-100 score
+
             return int((discount_pct / 50.0) * 100)
 
     @classmethod
@@ -100,17 +100,16 @@ class ScoringService:
         if mileage is None:
             return base_score
 
-        # Apply mileage penalty (reduce score 5-10% per 50k km over baseline)
-        # Baseline: 50k km (no penalty)
+
         if mileage <= 50000:
             return base_score
 
-        # Calculate penalty
+
         excess_km = mileage - 50000
-        penalty_factor = min((excess_km / 50000) * 0.10, 0.30)  # Max 30% penalty
+        penalty_factor = min((excess_km / 50000) * 0.10, 0.30)
         adjusted_score = int(base_score * (1 - penalty_factor))
 
-        return max(adjusted_score, 20)  # Minimum score of 20
+        return max(adjusted_score, 20)
 
     @classmethod
     def _calculate_demand_score(cls, brand: str, model: str) -> int:
@@ -141,10 +140,10 @@ class ScoringService:
         elif age_days == 1:
             return 90
         elif 2 <= age_days <= 7:
-            # Linear interpolation from 90 to 60
+
             return int(90 - ((age_days - 1) / 6) * 30)
         elif 8 <= age_days <= 30:
-            # Linear interpolation from 59 to 20
+
             return int(59 - ((age_days - 8) / 22) * 39)
         else:
             return 20

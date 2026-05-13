@@ -27,13 +27,13 @@ def make_fipe_controller() -> FIPEController:
     Returns:
         FIPEController instance with all dependencies wired
     """
-    # Create cache repository (uses database session)
+
     db_session = next(get_db_session())
     event_repo = SQLAlchemyRateLimitEventRepository(db_session)
     catalog_cache_repo = CatalogCacheRepository(db_session)
     api_hit_repo = ApiHitRepository(db_session)
 
-    # Create FIPE API client
+
     fipe_client = FIPEClient(
         base_url="https://parallelum.com.br/fipe/api/v1",
         timeout=10.0,
@@ -43,11 +43,11 @@ def make_fipe_controller() -> FIPEController:
     )
     cache_repository = SQLAlchemyCacheRepository(db_session)
 
-    # Create use case
+
     lookup_use_case = LookupFIPEPriceUseCase(
         fipe_client=fipe_client,
         cache_repository=cache_repository
     )
 
-    # Create and return controller
+
     return FIPEController(lookup_use_case=lookup_use_case)

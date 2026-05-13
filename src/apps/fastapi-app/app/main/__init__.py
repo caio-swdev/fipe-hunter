@@ -5,7 +5,7 @@ FastAPI application for automated vehicle opportunity finder.
 """
 import os
 from dotenv import load_dotenv
-# Load .env if present (local dev only — in prod, env vars are injected directly)
+
 load_dotenv()
 
 from fastapi import FastAPI
@@ -16,7 +16,7 @@ from app.middleware.session_middleware import SessionMiddleware
 from app.limiter import limiter
 import logging
 
-# Configure logging
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -24,7 +24,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Create FastAPI app
+
 app = FastAPI(
     title="FIPE Hunter API",
     description="Automated vehicle opportunity finder for Brazilian marketplaces",
@@ -36,10 +36,8 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Middleware registration order matters in Starlette:
-# last registered = outermost layer = runs first on request.
-# CORS must be outermost so it handles OPTIONS preflight before session logic.
-app.add_middleware(SessionMiddleware)   # inner layer — runs second
+
+app.add_middleware(SessionMiddleware)
 
 _cors_origins = ["http://localhost:3000", "http://localhost:3001"]
 _frontend_url = os.getenv("FRONTEND_URL")
@@ -52,10 +50,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-)  # outer layer — runs first
+)
 
 
-# Health check endpoint
 @app.get("/health", tags=["health"])
 def health_check():
     """System health check endpoint."""
@@ -75,16 +72,14 @@ def api_root():
     }
 
 
-# Create database tables on startup
 from fipe_infra.database.models import Base
 from fipe_infra.database.session import engine, DATABASE_URL
 
 if "sqlite" in DATABASE_URL:
-    # Dev: create tables directly (no migration step needed)
-    Base.metadata.create_all(bind=engine)
-# Postgres (prod): tables are created via `alembic upgrade head` before app starts
 
-# Include routers
+    Base.metadata.create_all(bind=engine)
+
+
 from app.routes import listing_routes
 from app.routes import dashboard_routes
 from app.routes import fipe_routes
@@ -106,10 +101,6 @@ app.include_router(admin_routes.router, prefix="/api")
 app.include_router(scrape_routes.router, prefix="/api")
 
 
-
-# ─── Static frontend (SPA) ────────────────────────────────────────────────────
-# In production the Vite dist/ is baked into the Docker image.
-# In local dev this directory won't exist — API-only mode is used instead.
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path

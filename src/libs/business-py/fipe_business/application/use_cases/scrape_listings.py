@@ -58,33 +58,33 @@ class ScrapeListingsUseCase:
         }
 
         try:
-            # Scrape marketplace
+
             listings = self.scraper.scrape(max_listings=max_listings)
             stats["scraped"] = len(listings)
 
-            # Process each listing
+
             for listing in listings:
                 try:
-                    # Deduplication: check if URL already exists
+
                     existing = self.listing_repository.find_by_url(listing.url)
 
                     if existing:
-                        # Duplicate found - skip
+
                         stats["duplicates"] += 1
                         continue
 
-                    # New listing - save to repository
+
                     self.listing_repository.save(listing)
                     stats["saved"] += 1
 
                 except Exception as e:
-                    # Error saving individual listing
+
                     print(f"Error processing listing {listing.url}: {e}")
                     stats["errors"] += 1
                     continue
 
         except Exception as e:
-            # Scraping failed entirely
+
             print(f"Scraping failed: {e}")
             raise
 

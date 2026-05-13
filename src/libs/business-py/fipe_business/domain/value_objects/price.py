@@ -18,10 +18,7 @@ class Price:
         if not isinstance(self.amount, Decimal):
             raise TypeError("Price amount must be Decimal type")
 
-        # Note: We allow negative amounts for discount calculations
-        # but prevent negative prices when created directly
 
-        # Ensure 2 decimal places
         object.__setattr__(
             self,
             'amount',
@@ -45,15 +42,15 @@ class Price:
         - "R$ 25.000,00"
         - "25.000,00"
         """
-        # Remove currency symbol and whitespace
+
         cleaned = value.replace("R$", "").replace(" ", "").strip()
 
-        # Handle Brazilian format (25.000,00 -> 25000.00)
+
         if "," in cleaned and "." in cleaned:
-            # Brazilian format with both thousand separator and decimal
+
             cleaned = cleaned.replace(".", "").replace(",", ".")
         elif "," in cleaned:
-            # Only comma (decimal separator)
+
             cleaned = cleaned.replace(",", ".")
 
         return cls(amount=Decimal(cleaned))
